@@ -4,9 +4,10 @@ import numpy as np
 
 
 def DetectColor(color):
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)
     while True:
         _, frame = cap.read()
+        frame = cv2.flip(frame, 1)
         lab = cv2.cvtColor(frame, cv2.COLOR_BGR2LAB)
         if color == 'red':
             lower = np.array([20, 140, 120])
@@ -29,9 +30,9 @@ def DetectColor(color):
                 cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 255), 2)
         cv2.imshow("mask", mask)
         cv2.imshow("video", frame)
-        if cv2.waitKey(16) == ord('q'):
+        
             break
-    cap.release()
+    cap.release()if cv2.waitKey(16) == ord('q'):
     cv2.destroyAllWindows()
 
 
