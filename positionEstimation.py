@@ -4,10 +4,13 @@ import numpy as np
 
 # Define world's variables
 cube_size = 2.5
-cube_points = np.array([
-    [0, 0, 0], [cube_size, 0, 0], [cube_size, cube_size, 0], [0, cube_size, 0],  # Base
-    [0, 0, cube_size], [cube_size, 0, cube_size], [cube_size, cube_size, cube_size], [0, cube_size, cube_size]  # Top
-], dtype=np.float32)
+# cube_points = np.array([
+#     [0, 0, 0], [cube_size, 0, 0], [cube_size, cube_size, 0], [0, cube_size, 0],  # Base
+#     [0, 0, cube_size], [cube_size, 0, cube_size], [cube_size, cube_size, cube_size], [0, cube_size, cube_size]  # Top
+# ], dtype = float)
+
+cube_points = np.array([[0, 0, 0], [cube_size, 0, 0], [cube_size, 0, -cube_size], [0, 0, -cube_size], [0, cube_size, 0], 
+                        [cube_size, cube_size, 0], [cube_size, cube_size, -cube_size], [0, cube_size, -cube_size]], dtype=float)
 
 axis = np.float32([
     [6, 0, 0], [0, 6, 0], [0, 0, 6]  # Extended axes for visibility
@@ -27,17 +30,28 @@ def draw_axes(frame, cam_matrix, dist_coeffs, rvecs, tvecs, cube_corners):
     return frame
 
 # Preprocessing to enhance edge detection
-def preprocess_frame(frame):
+def preprocess_frame(frame, bbox):
     gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-    blurred = cv.GaussianBlur(gray, (5, 5), 0)  # Reduce noise
-    edges = cv.Canny(blurred, 50, 150)  # Apply Canny Edge Detection
 
-    # Morphological operations to enhance edges
+    # Adaptive Histogram Equalization (CLAHE)
+    clahe = cv.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
+    gray = clahe.apply(gray)
+
+    # Reduce noise while keeping edges (Bilateral Filter)
+    filtered = cv.bilateralFilter(gray, 9, 75, 75)
+
+    # Canny Edge Detection with adaptive thresholding
+    median_val = np.median(filtered)
+    lower_thresh = int(max(0, 0.7 * median_val))
+    upper_thresh = int(min(255, 1.3 * median_val))
+    edges = cv.Canny(filtered, lower_thresh, upper_thresh)
+
+    # Morphological Closing to connect broken edges
     kernel = np.ones((3, 3), np.uint8)
-    edges = cv.dilate(edges, kernel, iterations=1)
-    edges = cv.erode(edges, kernel, iterations=1)
+    edges = cv.morphologyEx(edges, cv.MORPH_CLOSE, kernel)
 
     return edges
+
 
 # HSV Thresholding for Blue Cube
 def threshold_cube(frame):
@@ -45,67 +59,87 @@ def threshold_cube(frame):
     lower_blue = np.array([90, 50, 50])
     upper_blue = np.array([130, 255, 255])
     mask = cv.inRange(hsv, lower_blue, upper_blue)
-    
-    # Apply morphology to clean up noise
+
+    # Use morphological closing to remove small holes inside the detected object
     kernel = np.ones((5, 5), np.uint8)
     mask = cv.morphologyEx(mask, cv.MORPH_CLOSE, kernel)
-    return mask
+    mask = cv.morphologyEx(mask, cv.MORPH_OPEN, kernel)
+
+    contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+    bbox = (0, 0, 0, 0)
+
+    if contours:
+        largest_contour = max(contours, key=cv.contourArea)
+        if cv.contourArea(largest_contour) > 500:
+            x, y, w, h = cv.boundingRect(largest_contour)
+            bbox = (x, y, w, h)
+            cv.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+
+    return mask, bbox
+
 
 # Find Cube Contours
 def get_cube_contours(mask):
     contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
-    
-    contour_frame = np.zeros(mask.shape, dtype=np.uint8)  # Blank image for contours visualization
-    cv.drawContours(contour_frame, contours, -1, 255, 1)  # Draw all contours in white
+    contour_frame = np.zeros(mask.shape, dtype=np.uint8)
+    cv.drawContours(contour_frame, contours, -1, 255, 1)
 
+    best_approx = None
     for cnt in contours:
         if cv.contourArea(cnt) > 500:
             approx = cv.approxPolyDP(cnt, 0.02 * cv.arcLength(cnt, True), True)
-            if len(approx) == 4:  # Detecting a quadrilateral (potential cube face)
-                return approx.reshape(-1, 2), contours, contour_frame  # Return cube corners, all contours, and contour image
 
-    return None, contours, contour_frame
+            if 4 <= len(approx) <= 6:  # Accept quadrilateral or hexagonal shapes
+                best_approx = approx.reshape(-1, 2)
+
+    return best_approx, contours, contour_frame
 
 def position_estimation(frame, cube_corners, cam_matrix, dist_coeffs):
-    if cube_corners is None or cube_corners.shape != (4, 2):
-        return None, None  # No object detected
+    if cube_corners is None or cube_corners.shape != (5, 2):
+        print("[ERROR] Cube corners are not in the expected shape!")  # Debugging
+        return frame, None, None  # Ensure three values are returned
 
-    retval, rvec, tvec, _ = cv.solvePnPRansac(cube_points[:4], cube_corners.astype(np.float32), cam_matrix, dist_coeffs)
+    retval, rvec, tvec = cv.solvePnP(cube_points[:4], cube_corners.astype(np.float32), cam_matrix, dist_coeffs, useExtrinsicGuess=False)
 
-    if retval:
-        frame = draw_axes(frame, cam_matrix, dist_coeffs, rvec, tvec, cube_corners)
-    return rvec, tvec
+    if not retval:
+        print("[ERROR] solvePnP failed!")  # Debugging
+        return frame, None, None  # Ensure three values are returned
+
+    frame = draw_axes(frame, cam_matrix, dist_coeffs, rvec, tvec, cube_corners)
+    return frame, rvec, tvec
 
 def main():
     cam_matrix, dist_coeffs = load_calibration()
-    cap = cv.VideoCapture(1)
-    
+    cap = cv.VideoCapture("D:/Prime/Playing/doan/data/red vid.MOV")
+
     while True:
         ret, frame = cap.read()
         if not ret:
             break
-        
-        original_frame = frame.copy()  # Copy for original view
 
-        # Preprocess frame for edge detection
-        edges = preprocess_frame(frame)
+        # Cube Detection
+        mask, bbox = threshold_cube(frame)
+        processed = preprocess_frame(frame, bbox)
 
-        # Detect cube using HSV thresholding
-        mask = threshold_cube(frame)
+        # Edge Detection
+        edges = cv.Canny(processed, 50, 150)
 
-        # Get cube contours
+        # Contour Detection
         cube_corners, contours, contour_frame = get_cube_contours(mask)
 
+        # Pose Estimation
         if cube_corners is not None:
-            cv.drawContours(frame, [cube_corners], -1, (255, 0, 0), 2)
-            position_estimation(frame, cube_corners, cam_matrix, dist_coeffs)
-
-        # Display all process steps
-        # cv.imshow('Original Frame', original_frame)
-        cv.imshow('HSV Mask (Color Detection)', mask)
-        cv.imshow('Edge Detection (Canny)', edges)
-        # cv.imshow('Contours Detection', contour_frame)
-        cv.imshow('Final Output (Pose Estimation)', frame)
+            for i, corner in enumerate(cube_corners):
+                cv.circle(frame, tuple(corner), 10, (0, 0, 255), -1)  # Draw the corner
+                cv.putText(frame, str(i), tuple(corner + np.array([5, -5])), 
+                        cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)  # Display index
+            frame, rvec, tvec = position_estimation(frame, cube_corners, cam_matrix, dist_coeffs)
+        
+        # Display Results
+        cv.imshow('HSV Threshold', mask)
+        cv.imshow('Preprocessed', processed)
+        cv.imshow('Canny Edges', edges)
+        cv.imshow('Final Output', frame)
 
         if cv.waitKey(1) & 0xFF == ord('q'):
             break
