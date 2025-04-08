@@ -6,7 +6,7 @@ def nothing(x):
     pass
 
 
-image = cv2.imread("blue_.jpg")
+image = cv2.imread("data/blue_.jpg")
 image = cv2.resize(image, (640, 480))
 
 cv2.namedWindow("color range")
@@ -38,6 +38,7 @@ while True:
     result = cv2.bitwise_and(image, image, mask=mask)
 
     cv2.imshow('color range', result)
+    cv2.imshow('LAB', mask)
     if cv2.waitKey(10) & 0xFF == ord('q'):
         break
 
