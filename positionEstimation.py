@@ -75,6 +75,7 @@ while True:
     contours, hierachy = cv.findContours(gray, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
 
     approx = None
+    text = "Default: None"
     if contours:
         for contour in contours:
             eps = 0.02*cv.arcLength(contour, True)
@@ -95,14 +96,13 @@ while True:
                     text = "solvePnP failed"
             else:
                 text = "Not enough corners"
-        else:
-            text = "Object not found"
 
-
+    text_position = (10, img.shape[0] - 10)
+    cv.putText(img_copy, text, text_position, cv.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2, cv.LINE_AA)
             
-    approx_mask = np.zeros(img.shape[:2], dtype=np.uint8)
-    cv.fillPoly(approx_mask, [approx], 255)
-    masked_gray = cv.bitwise_and(gray, gray, mask=approx_mask) #grayscale cut-out
+    # approx_mask = np.zeros(img.shape[:2], dtype=np.uint8)
+    # cv.fillPoly(approx_mask, [approx], 255)
+    # masked_gray = cv.bitwise_and(gray, gray, mask=approx_mask) #grayscale cut-out
 
     # # Draw approximate corners
     # index = 0
