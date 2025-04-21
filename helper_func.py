@@ -1,7 +1,12 @@
 import cv2 as cv
 import numpy as np
+import os
 
-DETECTION_RANGE_TRUE = 5000
+
+def load_calibration():
+    param_path = os.path.join(os.getcwd(), 'calibration.npz')
+    param_data = np.load(param_path)
+    return param_data['camMatrix'], param_data['distCoeff']
 
 # Power law transfrom - Gamma Correction: a technique to adjust the brightness and the contrast of the image
 # O = I^(1/G)
