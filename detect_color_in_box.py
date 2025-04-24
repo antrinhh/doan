@@ -31,7 +31,10 @@ while True:
         mask_red = cv2.inRange(lab, lower_red, upper_red)
         mask_green = cv2.inRange(lab, lower_green, upper_green)
         mask_blue = cv2.inRange(lab, lower_blue, upper_blue)
+
+        # do range mau cua cai blue no khong on
         mask_blue = cv2.bitwise_not(mask_blue)
+
         total_pixels = roi.shape[0]*roi.shape[1]
         percent_red = cv2.countNonZero(mask_red) / total_pixels
         percent_green = cv2.countNonZero(mask_green)/total_pixels
