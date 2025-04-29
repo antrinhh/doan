@@ -9,14 +9,14 @@ import datetime
 cam_matrix, dist_coeffs = load_calibration()
 
 class Cube_2:
-    def __init__(self, name, frame, color, boundingbox, contour, save_flag=False, cube_size = 2.5, points_num = 6, epsilon_percentages_arc = 0.02):
+    def __init__(self, name, frame, color, boundingbox, contour, save_flag=False, cube_size = 2.5, points_num = 6, epsilon_percentages_arc = 0.08):
         self.name = name
         self.save_flag = save_flag
         self.eps_arc = epsilon_percentages_arc
         self.frame = frame.copy()
         self.color = color
         self.x, self.y, self.w, self.h = boundingbox
-        self.ROI = self.frame[self.y - 50:self.y + self.h + 50, self.x - 50:self.x + self.w + 50]
+        self.ROI = self.frame[self.y - 100:self.y + self.h + 100, self.x - 100:self.x + self.w + 100]
         self.contour = contour
         self.points_num = points_num
         self.cube_size = cube_size
@@ -34,21 +34,26 @@ class Cube_2:
         ]
 
         valid_points = [np.array(pt) for pt in points if pt is not None]
+        self.retval, self.rvec, self.tvec = None, None, None
+        self.success = False
 
         self.approx_points = np.array(valid_points, dtype=np.float32)
-        self.approx_2 = self.approx_6_points() 
-        try:
-            self.retval, self.rvec, self.tvec = cv.solvePnP(self.world_points[:len(self.approx_points)], self.approx_points.astype(np.float32), cam_matrix, dist_coeffs)
-            distance = np.linalg.norm(self.tvec)
-            text = f"Distance to camera: {distance:.2f} cm"
-        except:
-            text = f"PnP failed {len(self.approx_points)}"
+        for num in [6, 5, 4]:
+            try:
+                self.retval, self.rvec, self.tvec = cv.solvePnP(self.world_points[:len(self.approx_points)], self.approx_points.astype(np.float32), cam_matrix, dist_coeffs)
+                if self.retval is not None:
+                    self.distance = np.linalg.norm(self.tvec)
+                    text = f"Distance to camera {name, color, num}: {self.distance:.2f} cm"
+                    self.success = True
+                    break
+            except:
+                text = f"PnP failed {len(self.approx_points)}"
         print(text)
     
         if self.save_flag:
             self.draw_surface_points()
             print("World points (3D):", self.world_points[:len(self.approx_points)])
-            print(f"Approx points (2D): type: {type(self.approx_points)}", self.approx_points)
+            print(f"Approx points (2D): {self.approx_points}")
 
 
     def img_process_rgb2canny(self, input_ROI):        

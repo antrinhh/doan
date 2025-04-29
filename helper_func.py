@@ -83,6 +83,7 @@ def morp_noise(binary_img, kernel_size = (3, 3)):
     kernel = np.ones((5, 5))
     erode = cv.morphologyEx(close, cv.MORPH_ERODE, kernel)
 
+    erode = cv.morphologyEx(erode, cv.MORPH_CLOSE, (9, 9))
     return erode
 
 def gray_3_colors(frame):
@@ -98,3 +99,12 @@ def gray_3_colors(frame):
     gray_green = cv.cvtColor(frame_green, cv.COLOR_BGR2GRAY)
 
     return gray_red, gray_blue, gray_green
+
+def is_closed_contour(contour, tolerance=10):
+    if len(contour) >= 3:
+        start = contour[0][0]
+        end = contour[-1][0]
+        dist = np.linalg.norm(start - end)
+        return dist < tolerance
+    return False
+
