@@ -1,33 +1,50 @@
 import numpy as np
 from math import sin, cos, atan2, sqrt, degrees, radians, pi
 
+###################################
+#   Khau   ##   qi  ##  di  ##  ai  ##  alpha
+#   1      ##   q1  ##  d1  ##  0   ##  pi/2
+#   2      ##   q2  ##  0   ##  a2  ##  pi
+#   3      ##   q3  ##  0   ##  a3  ##  pi
+#   4      ##   q4  ##  0   ##  a4  ##  0     
+#  camera  ##      
+
+
 d1 = 130
-a2 = 140
+a2 = 140    
 a3 = 140
 a4 = 75
 
+x_end_cam = 70
+y_end_cam = 40
+z_end_cam = 0
+
+def Homogeous_end_to_cam():
+    H = np.array([[0,       0,      1,      -x_end_cam],
+                  [0,       -1,     0,      y_end_cam],
+                  [1,       0,      0,      z_end_cam],
+                  [0,       0,      0,      1]], dtype=np.float32)
+    return H
 
 def ForwardKinematics(q1, q2, q3, q4):
-    q4 = 2*pi-q4
-    H = np.array([[cos(q1)*cos(q2-q3-q4), -cos(q1)*sin(q2-q3-q4), sin(q1), a2*cos(q1)*cos(q2)+a3*cos(q1)*cos(q2-q3-q4)+a4*cos(q1)*cos(q2-q3-q4)],
-                  [sin(q1)*cos(q2-q3-q4), -sin(q1)*sin(q2-q3-q4), -cos(q1), a2*sin(q1)
-                   * cos(q2)+a3*sin(q1)*cos(q2-q3-q4)+a4*sin(q1)*cos(q2-q3-q4)],
-                  [sin(q2-q3-q4), cos(q2-q3-q4), 0, d1+a2 *
-                   sin(q2)+a3*sin(q2-q3)+a4*sin(q2-q3-q4)],
-                  [0, 0, 0, 1]], dtype=np.float32)
+    q4 = 2 * pi - q4
+    H = np.array([[cos(q1) * cos(q2 - q3 + q4),     -cos(q1) * sin(q2 - q3 + q4),        sin(q1),       a2 * cos(q1) * cos(q2) + a3 * cos(q1) * cos(q2 - q3) + a4 * cos(q1) * cos(q2 - q3 + q4)],
+                  [sin(q1) * cos(q2 - q3 + q4),     -sin(q1) * sin(q2 - q3 + q4),       -cos(q1),       a2 * sin(q1) * cos(q2) + a3 * sin(q1) * cos(q2 - q3) + a4 * sin(q1) * cos(q2 - q3 + q4)],
+                  [sin(q2 - q3 + q4),               cos(q2 - q3 + q4),                  0,              d1 + a2 * sin(q2) + a3 * sin(q2 - q3) + a4 * sin(q2 - q3 + q4)],
+                  [0,                               0,                                  0,              1]], dtype=np.float32)
     return H[0][3], H[1][3], H[2][3]
 
 
 def InverseKinematics(x, y, z):
     q1 = atan2(y, x)
-    r = sqrt(x**2+y**2)-a4
-    D = (r**2+(z-d1)**2 - a2**2-a3**2)/(2*a2*a3)
-    q3 = atan2(sqrt(1-D**2), D)
+    r = sqrt(x**2 + y**2) - a4
+    D = (r**2 + (z - d1)**2 - a2**2 - a3**2)/(2 * a2 * a3)
+    q3 = atan2(sqrt(1 - D**2), D)
 
-    alpha = atan2(a3*sin(q3)/r, (a2+a3*cos(q3))/r)
-    beta = atan2(z-d1, r)
-    q2 = alpha+beta
-    q4 = q3 - alpha-beta
+    alpha = atan2(a3 * sin(q3)/r, (a2 + a3 * cos(q3))/r)
+    beta = atan2(z - d1, r)
+    q2 = alpha + beta
+    q4 = q3 - alpha - beta
     return q1, q2, q3, q4
 
 
