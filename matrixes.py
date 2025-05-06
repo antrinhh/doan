@@ -1,3 +1,4 @@
+import cv2 as cv
 import numpy as np
 from math import sin, cos, atan2, sqrt, degrees, radians, pi
 
@@ -15,9 +16,16 @@ a2 = 140
 a3 = 140
 a4 = 75
 
-x_end_cam = 70
+x_end_cam = 30
 y_end_cam = 40
 z_end_cam = 0
+
+def get_homogeous_matrix(rvec, tvec):
+    R, _ = cv.Rodrigues(rvec)  # Convert to 3x3 rotation matrix
+    H = np.eye(4)
+    H[:3, :3] = R
+    H[:3, 3] = tvec.flatten()
+    return H
 
 def Homogeous_end_to_cam():
     H = np.array([[0,       0,      1,      -x_end_cam],
@@ -27,7 +35,6 @@ def Homogeous_end_to_cam():
     return H
 
 def ForwardKinematics(q1, q2, q3, q4):
-    q4 = 2 * pi - q4
     H = np.array([[cos(q1) * cos(q2 - q3 + q4),     -cos(q1) * sin(q2 - q3 + q4),        sin(q1),       a2 * cos(q1) * cos(q2) + a3 * cos(q1) * cos(q2 - q3) + a4 * cos(q1) * cos(q2 - q3 + q4)],
                   [sin(q1) * cos(q2 - q3 + q4),     -sin(q1) * sin(q2 - q3 + q4),       -cos(q1),       a2 * sin(q1) * cos(q2) + a3 * sin(q1) * cos(q2 - q3) + a4 * sin(q1) * cos(q2 - q3 + q4)],
                   [sin(q2 - q3 + q4),               cos(q2 - q3 + q4),                  0,              d1 + a2 * sin(q2) + a3 * sin(q2 - q3) + a4 * sin(q2 - q3 + q4)],

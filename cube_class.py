@@ -15,9 +15,9 @@ class Cube_2:
         self.eps_arc = epsilon_percentages_arc
         self.frame = frame.copy()
         self.color = color
-        self.x, self.y, self.w, self.h = boundingbox
-        self.ROI = self.frame[self.y - 100:self.y + self.h + 100, self.x - 100:self.x + self.w + 100]
         self.contour = contour
+        self.x, self.y, self.w, self.h = cv.boundingRect(self.contour)
+        self.ROI = self.frame[self.y - 100:self.y + self.h + 100, self.x - 100:self.x + self.w + 100]
         self.points_num = points_num
         self.cube_size = cube_size
         self.world_points = np.array([[0, 0, 0], [cube_size, 0, 0], [cube_size, 0, -cube_size], 
