@@ -5,7 +5,7 @@ from aruco_axis import draw_axis
 import math
 
 
-size = 7.8
+size = 78
 obj_points = np.array([[0, 0, 0], [-size/2, -size/2, 0], [-size/2, size/2, 0],
                       [size/2, size/2, 0], [size/2, -size/2, 0]], dtype=np.float32)
 
@@ -29,8 +29,8 @@ def homo_matrix_from_marker(frame, camera_matrix=cam_mtx, dist=dist, object_pts=
         retval, rvec, tvec = cv2.solvePnP(
             object_pts, point, camera_matrix, dist)
         if drawAxis == True:
-            axis = np.array([[2.5, 0, 0], [0, 2.5, 0], [
-                            0, 0, 2.5]], dtype=np.float32)
+            axis = np.array([[25, 0, 0], [0, 25, 0], [
+                            0, 0, 25]], dtype=np.float32)
             img_pts, jac = cv2.projectPoints(
                 axis, rvec, tvec, camera_matrix, dist)
             draw_axis(frame, point, img_pts)

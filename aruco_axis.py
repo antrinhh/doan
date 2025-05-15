@@ -34,17 +34,31 @@ def show_distance(frame, H=None):
     if H is not None:
         x, y, z = H[:3, 3].flatten()
         distance = math.sqrt(x**2+y**2+z**2)
-        cv2.putText(frame, f"distance: {distance:.3f}cm", (10, 30),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        cv2.putText(frame, f"distance to cam: {distance:.3f}mm", (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
 
-def show_matrix(frame, H=None):
+def show_matrix(frame, text, H=None, start_y=50):
     if H is not None:
-        start_y = 30
+        cv2.putText(frame, f"{text}:", (410, start_y-20),
+                    cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 255), 2)
         dy = 20
         font = cv2.FONT_HERSHEY_PLAIN
         for i in range(H.shape[0]):
             text = f"{H[i][0]: .2f} {H[i][1]: .2f} {H[i][2]: .2f} {H[i][3]: .2f}"
             y = start_y + i * dy
             cv2.putText(frame, text, (410, y), cv2.FONT_HERSHEY_PLAIN,
-                        1, (0, 255, 0), 2)
+                        1, (0, 0, 255), 2)
+
+
+def show_coords(frame, H=None):
+    if H is not None:
+        x, y, z = H[:3, 3].flatten()
+        cv2.putText(frame, f"Toa do trong he base:", (410, 130),
+                    cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 255), 2)
+        cv2.putText(frame, f"x: {x:.2f}", (410, 150),
+                    cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 255), 2)
+        cv2.putText(frame, f"y: {y:.2f}", (410, 170),
+                    cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 255), 2)
+        cv2.putText(frame, f"z: {z:.2f}", (410, 190),
+                    cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 255), 2)
