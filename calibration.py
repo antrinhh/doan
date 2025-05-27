@@ -39,8 +39,7 @@ def calibrate(showPics = True):
     if cv.waitKey(16) == ord('q'):
         cv.destroyAllWindows()
 
-    repError, camMatrix, distCoeff, rvecs, tvecs = cv.calibrateCamera(
-        worldPtsList, imgPtsList, imgGray.shape[::-1], None, None)
+    repError, camMatrix, distCoeff, rvecs, tvecs = cv.calibrateCamera(worldPtsList, imgPtsList, imgGray.shape[::-1], None, None)
     print("Camera Matrix: \n", camMatrix)
     print("Reproj Error (pixels): {:.4f}".format(repError))
 
@@ -79,5 +78,6 @@ def takePics():
 
 if __name__ == '__main__':
     runCalibration()
+    # takePics()
 
 

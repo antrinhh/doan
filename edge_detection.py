@@ -15,8 +15,7 @@ def draw(img, image_points, imgpts):
 
 
 with np.load("calibrate/B.npz") as X:
-    cam_mtx, dist, _, _ = [X[i]
-                           for i in ('cam_mtx', 'dist', 'rot_vec', 'trans_vec')]
+    cam_mtx, dist, _, _ = [X[i]for i in ('cam_mtx', 'dist', 'rot_vec', 'trans_vec')]
 
 
 size = 2.5

@@ -14,7 +14,7 @@ from math import sin, cos, atan2, sqrt, degrees, radians, pi
 d1 = 130
 a2 = 140
 a3 = 140
-a4 = 75
+a4 = 80
 
 x_end_cam = 30
 y_end_cam = 40

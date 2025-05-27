@@ -25,13 +25,12 @@ def DetectColor(image):
     scale = 1.2
     hsv[:, :, 1] = hsv[:, :, 1]*scale
     image = cv.cvtColor(hsv, cv.COLOR_HSV2BGR)
-    roi = image[184:294, 247:343]
-    lab = cv.cvtColor(roi, cv.COLOR_BGR2LAB)
+    lab = cv.cvtColor(image, cv.COLOR_BGR2LAB)
 
     mask_red = cv.inRange(lab, lower_red, upper_red)
     mask_green = cv.inRange(lab, lower_green, upper_green)
     mask_blue = cv.inRange(lab, lower_blue, upper_blue)
-    total_pixels = roi.shape[0]*roi.shape[1]
+    total_pixels = image.shape[0]*image.shape[1]
     percent_red = cv.countNonZero(mask_red) / total_pixels
     percent_green = cv.countNonZero(mask_green)/total_pixels
     percent_blue = cv.countNonZero(mask_blue)/total_pixels
@@ -39,14 +38,14 @@ def DetectColor(image):
     # cv.imshow("green's mask", mask_green)
     # cv.imshow("blue's mask", mask_blue)
     # cv.imshow("red's mask", mask_red)
-    if percent_red > 0.75:
-        return "red", (0, 0, 255)
-    elif percent_green > 0.75:
-        return "green", (0, 255, 0)
-    elif percent_blue > 0.6:
-        return "blue", (255, 0, 0)
+    if percent_red > 0.2:
+        return "red", percent_red
+    elif percent_green > 0.2:
+        return "green", percent_green
+    elif percent_blue > 0.2:
+        return "blue", percent_blue
     else:
-        return "unknown", (150, 150, 150)
+        return "unknown", None
 
 
 def detect_pickup_zone(frame, min_area=300):
