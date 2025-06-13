@@ -16,6 +16,7 @@ class Connector:
         if self.arduino and listen_flag:
             print("Arduino connected")
             self.start_listening()
+            
 
     def connect_arduino(self, retries=5):
         attempts = 0
@@ -50,14 +51,31 @@ class Connector:
         else:
             print("Arduino is not connected")
 
+    def send_cmd(self, cmd):
+        if cmd is None:
+            print("Cannot send command, no color is detected")
+            return
+        if self.arduino and self.arduino.is_open:
+            command = f"{cmd}\n"
+            self.arduino.write(command.encode())
+            print(f"Sent: {command.strip()}")
+        else:
+            print("Arduino not connected")
+
     def wait_for_ready(self, target_message="Finish setup", timeout=100):
         start_time = time.time()
         while time.time() - start_time < timeout:
-            if self.arduino.in_waiting > 0:
+            if self.arduino.in_waiting > 0 and target_message=="Finish setup":
                 line = self.arduino.readline().decode('utf-8', errors='ignore').strip()
-                print(f"Arduino boot: {line}")
+                print(f"{line}")
                 if target_message in line:
                     print("Arduino is ready.")
+                    return True
+            if self.arduino.in_waiting > 0 and target_message=="Done!":
+                line = self.arduino.readline().decode('utf-8', errors='ignore').strip()
+                print(f"Arduino waiting: {line}")
+                if target_message in line:
+                    print("Arm ready for next sorting")
                     return True
         print(f"Timeout waiting for '{target_message}' from Arduino.")
         return False

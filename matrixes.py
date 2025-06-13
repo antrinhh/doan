@@ -14,10 +14,10 @@ from math import sin, cos, atan2, sqrt, degrees, radians, pi
 d1 = 130
 a2 = 140
 a3 = 140
-a4 = 80
+a4 = 84
 
-x_end_cam = 30
-y_end_cam = 40
+x_end_cam = 5
+y_end_cam = 39
 z_end_cam = 0
 
 
@@ -29,13 +29,18 @@ def get_homogeous_matrix(rvec, tvec):
     return H
 
 
-def Homogeous_end_to_cam():
-    H = np.array([[0,       0,      1,      -x_end_cam],
-                  [0,       -1,     0,      y_end_cam],
+def Homogeous_end_to_cam(): # Rotate Ry(90) x Rotate Rz(180) x Rx(-25)
+    H = np.array([[0,       0.4226,      0.906,      -x_end_cam],
+                  [0,       -0.906,     0.4226,      y_end_cam],
                   [1,       0,      0,      z_end_cam],
                   [0,       0,      0,      1]], dtype=np.float32)
     return H
 
+def z_180():
+    H = np.array([[-1,       0,      0],
+                  [0,       -1,     0],
+                  [0,       0,      1],], dtype=np.float32)
+    return H
 
 def ForwardKinematics(q1, q2, q3, q4):
     H = np.array([[cos(q1) * cos(q2 - q3 + q4),     -cos(q1) * sin(q2 - q3 + q4),        sin(q1),       a2 * cos(q1) * cos(q2) + a3 * cos(q1) * cos(q2 - q3) + a4 * cos(q1) * cos(q2 - q3 + q4)],

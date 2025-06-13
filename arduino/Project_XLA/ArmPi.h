@@ -3,42 +3,42 @@
 #include <Servo.h>
 
 // #define S1_EN_PIN A1
-// Based: 1/16, step/angle = 40
-#define S1_STEP_PIN 3
-#define S1_DIR_PIN 2
+// Based: 1/8, step/angle = 40 H H L
+#define S1_STEP_PIN 2
+#define S1_DIR_PIN 5
 
 // #define S2_EN_PIN 6
-// Based: 1/16, step/angle = 40
-#define S2_STEP_PIN 5
-#define S2_DIR_PIN 4
+// Based: 1/16, step/angle = 40 L L H 
+#define S2_STEP_PIN 3
+#define S2_DIR_PIN 6
 
-// S3 1/32step, ~0.300V
+// S3 1/8step, ~0.300V, H H L
 // Neu theo nhu code goc dieu khien: 1/32 buoc va di qua ti le truyen 2/9 thi dong co phai co step/angle la 80
 // #define S3_EN_PIN 9
-#define S3_STEP_PIN 7
-#define S3_DIR_PIN 6
+#define S3_STEP_PIN 4
+#define S3_DIR_PIN 7
 
-#define S1_STOP_PIN 8
-#define S2_STOP_PIN 9
-#define S3_STOP_PIN 10
+#define S1_STOP_PIN 9
+#define S2_STOP_PIN 10
+#define S3_STOP_PIN 11
 
-#define SERVO_PIN 11
+#define SERVO_PIN 12
 
-#define STEPS_PER_DEGREE_S1 40
+#define STEPS_PER_DEGREE_S1 20
 #define STEPS_PER_DEGREE_S2 40
-#define STEPS_PER_DEGREE_S3 80
-#define S1_START -97
-#define S2_START 132
+#define STEPS_PER_DEGREE_S3 20
+#define S1_START -99
+#define S2_START 150
 #define S3_START 0 // home position is -22 degrees compare to horizontal
 #define S4_START -132
 
-#define a4 85.00 //a
+#define a4 83.00 //a
 #define a3 140.00 //b
 #define a2 140.00 //c
 #define d1 130.00 //d
 
-#define SERVO_OPEN 170
-#define SERVO_CLOSE 100
+#define SERVO_OPEN 80
+#define SERVO_CLOSE 0
 
 extern Servo myservo;
 
@@ -70,10 +70,12 @@ extern float joint_current[4];
 extern float xyz_current[4];
 extern float xyz_end_delta[5];
 extern float xyz_next[4];
-extern char receivedChars[64];
+extern char color[20];
 
 extern bool debug;
 extern bool newData;
+extern bool out_of_bound;
+extern bool first_move;
 
 void updatePosition(float q1, float q2, float q3, float q4);
 
@@ -86,6 +88,7 @@ void go_home();
 void pick_and_drop();
 
 void go_to_pos_end(float x, float y, float z, bool servo_angle);
+void go_to_pos_end_new(float x, float y, float z, bool servo_angle);
 
 void recvWithEndMarker();
 

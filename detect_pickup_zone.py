@@ -10,42 +10,28 @@ ZONE_DIMENSION = np.array([[ZONE_SIZE/2, -ZONE_SIZE/2, 0], [ZONE_SIZE/2, ZONE_SI
 def arm_scan():
     return True
 
-lower_red = np.array([20, 140, 120])
-upper_red = np.array([255, 230, 238])
-# green LAB range
-lower_green = np.array([0, 0, 126])
-upper_green = np.array([255, 127, 255])
-# blue LAB range
-lower_blue = np.array([0, 0, 0])
-upper_blue = np.array([132, 138, 109])
+
 
 
 def DetectColor(image):
-    hsv = cv.cvtColor(image, cv.COLOR_BGR2HSV)
-    scale = 1.2
-    hsv[:, :, 1] = hsv[:, :, 1]*scale
-    image = cv.cvtColor(hsv, cv.COLOR_HSV2BGR)
-    lab = cv.cvtColor(image, cv.COLOR_BGR2LAB)
-
-    mask_red = cv.inRange(lab, lower_red, upper_red)
-    mask_green = cv.inRange(lab, lower_green, upper_green)
-    mask_blue = cv.inRange(lab, lower_blue, upper_blue)
+    mask_red, _ = extract_red(image)
+    mask_blue, _ = extract_blue(image)
+    mask_green, _ = extract_green(image)
     total_pixels = image.shape[0]*image.shape[1]
     percent_red = cv.countNonZero(mask_red) / total_pixels
     percent_green = cv.countNonZero(mask_green)/total_pixels
     percent_blue = cv.countNonZero(mask_blue)/total_pixels
-    # cv.imshow("roi", roi)
-    # cv.imshow("green's mask", mask_green)
-    # cv.imshow("blue's mask", mask_blue)
-    # cv.imshow("red's mask", mask_red)
-    if percent_red > 0.2:
+    if percent_red > 0.5:
         return "red", percent_red
-    elif percent_green > 0.2:
+    elif percent_green > 0.5:
         return "green", percent_green
-    elif percent_blue > 0.2:
+    elif percent_blue > 0.5:
         return "blue", percent_blue
     else:
-        return "unknown", None
+        color_percents = {"red": percent_red, "green": percent_green, "blue": percent_blue}
+        best_color = max(color_percents, key=color_percents.get)
+        best_percent = color_percents[best_color]
+        return "unknown", best_percent
 
 
 def detect_pickup_zone(frame, min_area=300):
