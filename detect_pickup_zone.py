@@ -4,19 +4,25 @@ from helper_func import extract_red, extract_blue, extract_green, adjust_gamma, 
 from matrixes import Homogeous_end_to_cam
 
 ZONE_SIZE = 25
-ZONE_DIMENSION = np.array([[ZONE_SIZE/2, -ZONE_SIZE/2, 0], [ZONE_SIZE/2, ZONE_SIZE/2, 0], [-ZONE_SIZE/2, ZONE_SIZE/2, 0], 
-                        [-ZONE_SIZE/2, -ZONE_SIZE/2, 0]], dtype=float)
+ZONE_DIMENSION = np.array([[ZONE_SIZE/2, -ZONE_SIZE/2, 0], [ZONE_SIZE/2, ZONE_SIZE/2, 0], [-ZONE_SIZE/2, ZONE_SIZE/2, 0],
+                           [-ZONE_SIZE/2, -ZONE_SIZE/2, 0]], dtype=float)
+
 
 def arm_scan():
     return True
 
 
+def DetectColor(image, code):
+    mask_red, _ = extract_red(image, code)
+    mask_blue, _ = extract_blue(image, code)
+    mask_green, _ = extract_green(image, code)
 
+    # Morphology
+    kernel = np.ones((3, 3), np.uint8)
+    mask_red = cv.morphologyEx(mask_red, cv.MORPH_OPEN, kernel)
+    mask_green = cv.morphologyEx(mask_green, cv.MORPH_OPEN, kernel)
+    mask_blue = cv.morphologyEx(mask_blue, cv.MORPH_OPEN, kernel)
 
-def DetectColor(image):
-    mask_red, _ = extract_red(image)
-    mask_blue, _ = extract_blue(image)
-    mask_green, _ = extract_green(image)
     total_pixels = image.shape[0]*image.shape[1]
     percent_red = cv.countNonZero(mask_red) / total_pixels
     percent_green = cv.countNonZero(mask_green)/total_pixels
@@ -28,7 +34,8 @@ def DetectColor(image):
     elif percent_blue > 0.5:
         return "blue", percent_blue
     else:
-        color_percents = {"red": percent_red, "green": percent_green, "blue": percent_blue}
+        color_percents = {"red": percent_red,
+                          "green": percent_green, "blue": percent_blue}
         best_color = max(color_percents, key=color_percents.get)
         best_percent = color_percents[best_color]
         return "unknown", best_percent
@@ -54,8 +61,9 @@ def detect_pickup_zone(frame, min_area=300):
                            0.5, (0, 0, 255), 1, cv.LINE_AA)
             box = cv.boundingRect(contour)
             return sorted_pts, box, mask
-    
-    return [], [], mask 
+
+    return [], [], mask
+
 
 def sort_contour_points(pts):
     pts = pts.reshape(4, 2)
@@ -65,26 +73,29 @@ def sort_contour_points(pts):
     s = pts.sum(axis=1)
     diff = np.diff(pts, axis=1)
 
-    rect[0] = pts[np.argmin(s)]      
-    rect[2] = pts[np.argmax(s)]       
-    rect[1] = pts[np.argmin(diff)]    
-    rect[3] = pts[np.argmax(diff)]  
+    rect[0] = pts[np.argmin(s)]
+    rect[2] = pts[np.argmax(s)]
+    rect[1] = pts[np.argmin(diff)]
+    rect[3] = pts[np.argmax(diff)]
 
     return rect.astype(int)
+
 
 def distance_to_zone(points, cam_matrix, dist_coeffs):
     distance_to_zone = 0
     val, rv, tv = False, None, None
     if len(points) == 4:
         try:
-            val, rv, tv = cv.solvePnP(ZONE_DIMENSION, points, cam_matrix, dist_coeffs)
-            if val: 
+            val, rv, tv = cv.solvePnP(
+                ZONE_DIMENSION, points, cam_matrix, dist_coeffs)
+            if val:
                 distance_to_zone = np.linalg.norm(tv)
                 # print("Rotation:\n", rv)
                 # print("Distance to zone:", distance_to_zone)
         except cv.error as e:
-                print("solvePnP error:", e)
+            print("solvePnP error:", e)
     return val, rv, tv
+
 
 def main():
     vid = cv.VideoCapture(1)
@@ -96,14 +107,14 @@ def main():
     while True:
         ret, frame = vid.read()
         frame = cv.rotate(frame, cv.ROTATE_90_COUNTERCLOCKWISE)
-        
+
         points, mask = detect_pickup_zone(frame)
         points = np.array(points, dtype=np.float32)
-        
-        distance, retval, rvec, tvec = distance_to_zone(points, cam_matrix, dist_coeffs)
+
+        distance, retval, rvec, tvec = distance_to_zone(
+            points, cam_matrix, dist_coeffs)
         if retval:
             zones += 1
-
 
         cv.imshow("Pickup Zone Detection", mask)
         cv.imshow("frame", frame)
@@ -113,6 +124,7 @@ def main():
         #     cv.waitKey(-1)
     vid.release()
     cv.destroyAllWindows()
+
 
 if __name__ == '__main__':
     main()

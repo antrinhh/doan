@@ -10,55 +10,92 @@ def load_calibration():
 
 # Power law transfrom - Gamma Correction: a technique to adjust the brightness and the contrast of the image
 # O = I^(1/G)
-def adjust_gamma(img, gamma = 1.0): 
+
+
+def adjust_gamma(img, gamma=1.0):
     invGamma = 1/gamma
     table = np.array([((i / 255.0) ** invGamma) * 255
-		for i in np.arange(0, 256)]).astype("uint8")
+                      for i in np.arange(0, 256)]).astype("uint8")
     return cv.LUT(img, table)
 
-def extract_red(img):
-    hsv_img = cv.cvtColor(img, cv.COLOR_BGR2HSV)
-    
-    # Red at 0 degree
-    lower_red = np.array([0, 43, 46]) #lower_red = np.array([0, 161, 79])
-    upper_red = np.array([6, 255, 255])
-    mask_1 = cv.inRange(hsv_img, lower_red, upper_red)
 
-    # Red at 360 degree
-    lower_red = np.array([156, 43, 46]) #lower_red = np.array([173, 200, 84])
-    upper_red = np.array([179, 255, 255])
-    mask_2 = cv.inRange(hsv_img, lower_red, upper_red)
+def extract_red(img, code):
+    if code == "hsv":
+        hsv_img = cv.cvtColor(img, cv.COLOR_BGR2HSV)
 
-    mask = cv.bitwise_or(mask_1, mask_2)
+        # Red at 0 degree
+        lower_red = np.array([0, 43, 46])  # lower_red = np.array([0, 161, 79])
+        upper_red = np.array([6, 255, 255])
+        mask_1 = cv.inRange(hsv_img, lower_red, upper_red)
 
-    img = cv.bitwise_and(img, img, mask=mask)
+        # Red at 360 degree
+        # lower_red = np.array([173, 200, 84])
+        lower_red = np.array([156, 43, 46])
+        upper_red = np.array([179, 255, 255])
+        mask_2 = cv.inRange(hsv_img, lower_red, upper_red)
 
-    combined_masks = cv.hconcat([mask_1, mask_2])
-    #cv.imshow("Mask 1 (Low Red) | Mask 2 (High Red)", combined_masks)
-    # cv.destroyAllWindows()
-    return mask, img
+        mask = cv.bitwise_or(mask_1, mask_2)
 
-def extract_blue(img):
-    hsv_img = cv.cvtColor(img, cv.COLOR_BGR2HSV)
+        img = cv.bitwise_and(img, img, mask=mask)
 
-    lower_blue = np.array([90, 43, 46])
-    upper_blue = np.array([110, 255, 255])
+        combined_masks = cv.hconcat([mask_1, mask_2])
+        # cv.imshow("Mask 1 (Low Red) | Mask 2 (High Red)", combined_masks)
+        # cv.destroyAllWindows()
+        return mask, img
+    elif code == "lab":
+        lower_red = np.array([20, 140, 120])
+        upper_red = np.array([255, 230, 238])
+        lab = cv.cvtColor(img, cv.COLOR_BGR2LAB)
 
-    mask = cv.inRange(hsv_img, lower_blue, upper_blue)
-    img = cv.bitwise_and(img, img, mask=mask)
+        mask = cv.inRange(lab, lower_red, upper_red)
+        img = cv.bitwise_and(img, img, mask=mask)
+        return mask, img
+    return None
 
-    return mask, img
 
-def extract_green(img):
-    img_hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
+def extract_blue(img, code):
+    if code == "hsv":
+        hsv_img = cv.cvtColor(img, cv.COLOR_BGR2HSV)
 
-    lower_green=np.array([35,43,46])
-    upper_green=np.array([77,255,255])
+        lower_blue = np.array([90, 43, 46])
+        upper_blue = np.array([110, 255, 255])
 
-    mask = cv.inRange(img_hsv, lower_green, upper_green)
-    img = cv.bitwise_and(img, img, mask=mask)
+        mask = cv.inRange(hsv_img, lower_blue, upper_blue)
+        img = cv.bitwise_and(img, img, mask=mask)
 
-    return mask, img
+        return mask, img
+    elif code == "lab":
+        lower_blue = np.array([0, 0, 0])
+
+        upper_blue = np.array([132, 138, 109])
+        lab = cv.cvtColor(img, cv.COLOR_BGR2LAB)
+
+        mask = cv.inRange(lab, lower_blue, upper_blue)
+        img = cv.bitwise_and(img, img, mask=mask)
+        return mask, img
+    return None
+
+
+def extract_green(img, code):
+    if code == "hsv":
+        img_hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
+
+        lower_green = np.array([35, 43, 46])
+        upper_green = np.array([77, 255, 255])
+
+        mask = cv.inRange(img_hsv, lower_green, upper_green)
+        img = cv.bitwise_and(img, img, mask=mask)
+
+        return mask, img
+    elif code == "lab":
+        lower_green = np.array([0, 0, 126])
+        upper_green = np.array([255, 127, 255])
+        lab = cv.cvtColor(img, cv.COLOR_BGR2LAB)
+        mask = cv.inRange(lab, lower_green, upper_green)
+        img = cv.bitwise_and(img, img, mask=mask)
+        return mask, img
+    return None
+
 
 def mask_3_colors(img):
     mask_red, _ = extract_red(img)
@@ -75,7 +112,8 @@ def mask_3_colors(img):
 
     return mask, green, blue, red
 
-def morp_noise(binary_img, kernel_size = (3, 3)):
+
+def morp_noise(binary_img, kernel_size=(3, 3)):
     kernel = np.ones((kernel_size))
     open = cv.morphologyEx(binary_img, cv.MORPH_OPEN, kernel)
     close = cv.morphologyEx(open, cv.MORPH_CLOSE, kernel)
@@ -85,6 +123,7 @@ def morp_noise(binary_img, kernel_size = (3, 3)):
 
     erode = cv.morphologyEx(erode, cv.MORPH_CLOSE, (9, 9))
     return erode
+
 
 def gray_3_colors(frame):
     mask, mask_green, mask_blue, mask_red = mask_3_colors(frame)
@@ -100,6 +139,7 @@ def gray_3_colors(frame):
 
     return gray_red, gray_blue, gray_green
 
+
 def is_closed_contour(contour, tolerance=10):
     if len(contour) >= 3:
         start = contour[0][0]
@@ -107,4 +147,3 @@ def is_closed_contour(contour, tolerance=10):
         dist = np.linalg.norm(start - end)
         return dist < tolerance
     return False
-

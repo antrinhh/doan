@@ -9,10 +9,13 @@ from connector import Connector
 from detect_pickup_zone import detect_pickup_zone, distance_to_zone, DetectColor, ZONE_DIMENSION
 from aruco_detect import homo_matrix_from_marker
 from servo import angle_to_value
+import sys
 
-def main():    
+
+def main():
     factory = PiGPIOFactory()
-    servo = Servo(12, min_pulse_width=0.5/1000, max_pulse_width=2.5/1000, pin_factory=factory)
+    servo = Servo(12, min_pulse_width=0.5/1000,
+                  max_pulse_width=2.5/1000, pin_factory=factory)
     servo.value = angle_to_value(70)
     sleep(2)
 
@@ -21,9 +24,9 @@ def main():
     vid = cv.VideoCapture(1)
     loop_time = time()
     box = []
-    zone = 0 
+    zone = 0
     arduino = Connector()
-    
+
     while True:
         # Setup frame
         ret, frame = vid.read()
@@ -35,11 +38,12 @@ def main():
         fps = 1 / (time() - loop_time)
         fps_text = f"FPS {fps: .0f}"
         cv.putText(frame, fps_text, (10, 30),
-                    cv.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                   cv.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
         loop_time = time()
 
         if zone == 0:
-            H_cam_obj, box = homo_matrix_from_marker(frame, cam_matrix, dist_coeffs, drawAxis=False)
+            H_cam_obj, box = homo_matrix_from_marker(
+                frame, cam_matrix, dist_coeffs, drawAxis=False)
             if H_cam_obj is not None and box is not None:
                 x_min, y_min, x_max, y_max = box
                 x_min = max(x_min, 0)
@@ -48,7 +52,7 @@ def main():
                 y_max = min(y_max, frame.shape[0])
                 roi = frame[y_min-80:y_max+10, x_min-5:x_max+55]
                 zone = 1
-        if box: 
+        if box:
             x_min, y_min, x_max, y_max = box
             x_min = max(x_min, 0)
             y_min = max(y_min, 0)
@@ -57,8 +61,9 @@ def main():
             roi = frame[y_min-80:y_max+10, x_min-5:x_max+5]
 
         if zone == 1:
-            _, _ = homo_matrix_from_marker(frame, cam_matrix, dist_coeffs, drawAxis=False)
-            text, percent = DetectColor(roi)
+            _, _ = homo_matrix_from_marker(
+                frame, cam_matrix, dist_coeffs, drawAxis=False)
+            text, percent = DetectColor(roi, sys.argv[1])
             print(text, percent)
             if text != "unknown":
                 # x, y, z = trans_end_zones.flatten()
@@ -80,7 +85,7 @@ def main():
                 arduino.send_cmd("h")
                 arduino.wait_for_ready(target_message="Done!")
                 zone = 0
-            
+
         cv.imshow('origin', frame)
         if roi is not None and roi.size > 0:
             cv.imshow("roi", roi)
@@ -94,6 +99,7 @@ def main():
 
     vid.release()
     cv.destroyAllWindows
+
 
 if __name__ == "__main__":
     main()
