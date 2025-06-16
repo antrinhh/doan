@@ -1,9 +1,11 @@
 #include "ArmPi.h"
 
+int b_nums = 0;
+int g_nums = 0;
+int r_nums = 0;
+
 void setup() {
   Serial.begin(9600);
-
-  myservo.detach();
 
   // pinMode(S1_EN_PIN, OUTPUT);
   pinMode(S1_STEP_PIN, OUTPUT);
@@ -17,16 +19,26 @@ void setup() {
   pinMode(S1_STOP_PIN, INPUT_PULLUP);
   pinMode(S2_STOP_PIN, INPUT_PULLUP);
   pinMode(S3_STOP_PIN, INPUT_PULLUP);
-
-  myservo.attach(SERVO_PIN, 550, 2420);
-
-  myservo.write(SERVO_CLOSE);
-  myservo.write(SERVO_OPEN);
-  myservo.write(SERVO_CLOSE);
   go_home();  
-
-  go_to_pos_end(180, 0, 66, 1);
+  go_to_pos_end(190, 0, 60, 1);
   delay(2000);
+  go_to_pos_end(-40, -200, 60, 1);
+
+  // go_to_pos_end(250, 0, 58, 1);
+  // delay(2000);
+  // go_to_pos_end(250, 0, 89, 1);
+
+  // delay(2000);
+  // go_to_pos_end(-30, -200, 89, 1);
+  // delay(2000);
+  // go_to_pos_end(-30, -200, 60, 1);
+  // delay(2000);
+  // go_to_pos_end(-30, -200, 89, 1);
+  // delay(2000);
+  // // go_to_pos_end(250, 0, 85, 1);
+  // delay(2000);
+  // go_to_pos_end(190, 0, 60, 1);
+
   Serial.println("Finish setup");
 }
 
@@ -37,32 +49,52 @@ void loop(){
     if (inputvalue == '\n' || inputvalue == '\r') return;
 
     if(inputvalue ==  's'){
-        go_to_pos_end(290, 0, 80, 1);
+        go_to_pos_end(250, 0, 58, 1);
     }
     if(inputvalue == 'h'){
-        go_to_pos_end(180, 0, 66, 1);
+        go_to_pos_end(210, 0, 89, 0);
+        go_to_pos_end(190, 0, 60, 1);
     }
     if(inputvalue == 'b'){
-      Serial.println("X: 100, Y: 200, Z: 50");
-      go_to_pos_end(100, -200, 78, 1);
+      go_to_pos_end(250, 0, 89, 0);
+      go_to_pos_end(30, -200, 89, 0);
+      Serial.println("X: 30, Y: 200, Z: 60");
+      go_to_pos_end(30, -200, 60 + b_nums * 30, 0);
+      b_nums += 1;
+      Serial.println("Sorted!");
+      delay(1500);
+      go_to_pos_end(30, -200, 89, 1);
       Serial.println("s1_angle: " + String(s1_angle, 4));
       Serial.println("s2_angle: " + String(s2_angle, 4));
       Serial.println("s3_angle: " + String(s3_angle, 4));
     }
     if(inputvalue == 'r'){
-      Serial.println("X: 0, Y: 200, Z: 50");
-      go_to_pos_end(0, -200, 78, 1);
+      go_to_pos_end(250, 0, 89, 0);
+      go_to_pos_end(0, -200, 89, 0);
+      Serial.println("X: 0, Y: -200, Z: 60");
+      go_to_pos_end(0, -200, 60 * r_nums * 30, 0);
+      r_nums += 1;
+      Serial.println("Sorted!");
+      delay(1500);
+      go_to_pos_end(0, -200, 89, 1);
       Serial.println("s1_angle: " + String(s1_angle, 4));
       Serial.println("s2_angle: " + String(s2_angle, 4));
       Serial.println("s3_angle: " + String(s3_angle, 4));
     }
     if(inputvalue == 'g'){
-      Serial.println("X: -200, Y: 200, Z: 50");
-      go_to_pos_end(-100, -200, 78, 1);
+      go_to_pos_end(250, 0, 89, 0);
+      go_to_pos_end(-30, -200, 89, 0);
+      Serial.println("X: -30, Y: -200, Z: 60");
+      go_to_pos_end(-30, -200, 60 * g_nums *30, 0);
+      g_nums += 1;
+      Serial.println("Sorted!");
+      delay(1500);
+      go_to_pos_end(-30, -200, 89, 1);
       Serial.println("s1_angle: " + String(s1_angle, 4));
       Serial.println("s2_angle: " + String(s2_angle, 4));
       Serial.println("s3_angle: " + String(s3_angle, 4));
     }
+  }
 }
 
 

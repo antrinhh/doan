@@ -2,8 +2,6 @@
 #include <Arduino.h>
 #include <math.h>
 
-Servo myservo;
-
 bool s1_stop = true;
 float s1_pos = S1_START;
 float s1_angle = 0;
@@ -20,7 +18,7 @@ bool s3_stop = true;
 float s3_pos = S3_START;
 float s3_angle = 0;
 uint16_t s3_num_steps = 0;
-uint16_t s3_delay_us = 1000;
+uint16_t s3_delay_us = 1200;
 
 float q4 = 0;
 bool color = false;
@@ -36,24 +34,12 @@ bool first_move = true;
 float joint_current[4] = {S1_START, S2_START, S3_START, S4_START};
 float xyz_current[4] = {121.16, -4.23, 238.92, 0};
 float xyz_next[4] = {121.16, -4.23, 238.92, 0};  
-float xyz_end_delta[5]; 
 char cmd[20];             
-
-
-
-void bool_to_servo(bool a) {
-  if (a){
-    myservo.write(SERVO_OPEN);
-  }
-  else myservo.write(SERVO_CLOSE);
-}
 
 void end_to_coords() {
   xyz_next[0] = xyz_current[0] + xyz_end_delta[0] * cos(radians(joint_current[0])) + xyz_end_delta[2] * sin(radians(joint_current[0])) - 10;
   xyz_next[1] = (xyz_current[1] + xyz_end_delta[0] * sin(radians(joint_current[0])) - xyz_end_delta[2] * cos(radians(joint_current[0])));
   xyz_next[2] = xyz_current[2] + xyz_end_delta[1] - 20; 
-
-  
 }
 
 void go_home() {
@@ -100,7 +86,7 @@ void go_home() {
   }
 }
 
-void go_to_pos_end(float x, float y, float z, bool servo_angle) {
+void go_to_pos_end(float x, float y, float z, uint8_t done) {
   // Tính động học ngược
   float k = pow((sqrt(x * x + y * y) - a4), 2) + pow((z - d1), 2);
   float q2 = degrees(-atan((d1 - z) / (sqrt(x * x + y * y) - a4)) + acos((a2 * a2 + k - a3 * a3) / (2 * a2 * sqrt(k)))); //q2
@@ -143,23 +129,6 @@ void go_to_pos_end(float x, float y, float z, bool servo_angle) {
     out_of_bound = true;
     return;
   }
-  // Positions debug
-  if(debug){
-    Serial.print("S3 Angle: ");
-    Serial.print(s3_angle, 2);
-    Serial.print(", S3 Pos: ");
-    Serial.println(s3_pos, 2);
-
-    Serial.print("S2 Angle: ");
-    Serial.print(s2_angle, 2);
-    Serial.print(", S2 Pos: ");
-    Serial.println(s2_pos, 2);
-
-    Serial.print("S1 Angle: ");
-    Serial.print(s1_angle, 2);
-    Serial.print(", S1 Pos: ");
-    Serial.println(s1_pos, 2);
-  }
 
   // Stepper Dir
   digitalWrite(S1_DIR_PIN, (s1_angle < 0) ? HIGH : LOW); //HIGH == clockwise
@@ -170,19 +139,39 @@ void go_to_pos_end(float x, float y, float z, bool servo_angle) {
   s2_num_steps = round(abs(s2_angle) * STEPS_PER_DEGREE_S2);
   s3_num_steps = round(abs(s3_angle) * STEPS_PER_DEGREE_S3);
 
-  long max_steps = max(s2_num_steps, s3_num_steps);
-  long s2_counter = 0;
-  long s3_counter = 0;
+  if(debug){
+    Serial.print("S3 Angle: ");
+    Serial.print(s3_angle, 2);
+    Serial.print(", Steps: ");
+    Serial.print(s3_num_steps);
+    Serial.print(", S3 Pos: ");
+    Serial.println(s3_pos, 2);
+
+    Serial.print("S2 Angle: ");
+    Serial.print(s2_angle, 2);
+    Serial.print(", Steps: ");
+    Serial.print(s2_num_steps);
+    Serial.print(", S2 Pos: ");
+    Serial.println(s2_pos, 2);
+
+    Serial.print("S1 Angle: ");
+    Serial.print(s1_angle, 2);
+    Serial.print(", Steps: ");
+    Serial.print(s1_num_steps);
+    Serial.print(", S1 Pos: ");
+    Serial.println(s1_pos, 2);
+  }
 
   while (s1_num_steps || s2_num_steps || s3_num_steps) {
     if (s1_num_steps) digitalWrite(S1_STEP_PIN, HIGH);
     if (s2_num_steps) digitalWrite(S2_STEP_PIN, HIGH);
     if (s3_num_steps) digitalWrite(S3_STEP_PIN, HIGH);
     delayMicroseconds(s3_delay_us);
-    if (s2_stop) digitalWrite(S2_STEP_PIN, LOW);
+    if (s2_num_steps) digitalWrite(S2_STEP_PIN, LOW);
     delayMicroseconds(s3_delay_us);
     if (s2_num_steps) s2_num_steps--;
-    if (s2_stop) digitalWrite(S2_STEP_PIN, HIGH);
+
+    if (s2_num_steps) digitalWrite(S2_STEP_PIN, HIGH);
     delayMicroseconds(s3_delay_us);
 
     if (s1_num_steps) digitalWrite(S1_STEP_PIN, LOW);
@@ -199,9 +188,9 @@ void go_to_pos_end(float x, float y, float z, bool servo_angle) {
     Serial.println("X: " + String(x, 2) + ", Y: " + String(y, 2) + ", Z: " + String(z, 2));
   }
   // Control servo
-  // bool_to_servo(servo_angle);
-  Serial.println("Done!");
-  // update array
+  if(done){
+    Serial.println("Done!");
+  }
 
 }
 
@@ -235,47 +224,3 @@ void pick_and_drop() {
   }
   Serial.println("Done pickup!");
 } 
-
-void recvWithEndMarker() {
-  static byte ndx = 0;
-  char endMarker = '\n';
-  char rc;
-
-  while (Serial.available() > 0 && !newData) {
-    rc = Serial.read();
-    if (rc == endMarker) {
-      cmd[ndx] = '\0';  
-      ndx = 0;
-      newData = true;           
-    } else {
-      if (ndx < sizeof(color) - 1) {
-        cmd[ndx++] = rc;
-      }
-    }
-  }
-}
-
-void parseData() {
-  char * strtokIndx; 
-
-  strtokIndx = strtok(receivedChars, ",");
-  xyz_end_delta[0] = atof(strtokIndx);
-
-  strtokIndx = strtok(NULL, ",");
-  xyz_end_delta[1] = atof(strtokIndx);
-
-  strtokIndx = strtok(NULL, ",");
-  xyz_end_delta[2] = atof(strtokIndx);
-
-  strtokIndx = strtok(NULL, ",");
-  xyz_end_delta[3] = atoi(strtokIndx);
-
-  strtokIndx = strtok(NULL, ",");
-  xyz_end_delta[4] = atoi(strtokIndx);
-
-  Serial.print("X: "); Serial.println(xyz_end_delta[0]);
-  Serial.print("Y: "); Serial.println(xyz_end_delta[1]);
-  Serial.print("Z: "); Serial.println(xyz_end_delta[2]);
-  Serial.print("Open: "); Serial.println(xyz_end_delta[3]);
-  Serial.print("Color: "); Serial.println(xyz_end_delta[4]);
-}
