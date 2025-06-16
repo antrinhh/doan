@@ -19,7 +19,7 @@ def main():
 
     with np.load('calibration.npz') as X:
         cam_matrix, dist_coeffs = [X[i] for i in ('cam_mtx', 'dist')]
-    vid = cv.VideoCapture(1)
+    vid = cv.VideoCapture(0)
     loop_time = time()
     box = []
     zone = 0
@@ -68,29 +68,27 @@ def main():
                 # x, y, z = trans_end_zones.flatten()
                 arduino.send_cmd("s")
                 arduino.wait_for_ready(target_message="Done!")
-                print("Grabbing!")
                 servo.value = angle_to_value(0)
                 sleep(2)
                 if text == "blue":
                     arduino.send_cmd("b")
-                    arduino.wait_for_ready(target_message="Sorted!")
+                    arduino.wait_for_ready(target_message="Done!")
                 elif text == "red":
                     arduino.send_cmd("r")
-                    arduino.wait_for_ready(target_message="Sorted!")
+                    arduino.wait_for_ready(target_message="Done!")
                 elif text == "green":
                     arduino.send_cmd("g")
-                    arduino.wait_for_ready(target_message="Sorted!")
+                    arduino.wait_for_ready(target_message="Done!")
                 servo.value = angle_to_value(70)
                 sleep(2)
-                arduino.wait_for_ready(target_message="Done!")
                 arduino.send_cmd("h")
                 arduino.wait_for_ready(target_message="Done!")
                 zone = 0
             
         # cv.imshow('origin', frame)
         if roi is not None and roi.size > 0:
-            pass
-            #cv.imshow("roi", roi)
+            
+#cv.imshow("roi", roi)
         # Break, stop, pause
         if cv.waitKey(50) == ord('q'):
             break

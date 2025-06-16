@@ -37,20 +37,6 @@ class Connector:
         if not self.arduino:
             print("Failed to connect to Arduino after multiple attempts.")
 
-    def send_command(self, x, y, z, flag1, flag2):
-        if None in [x, y, z]:
-            print("Cannot send command. One or more coordinates are None.")
-            return
-        
-        if self.arduino and self.arduino.is_open:
-            b1 = int(flag1) # For servo open/close
-            b2 = int(flag2) # For color
-            command = f"{x:.2f}, {y:.2f}, {z:.2f}, {b1}, {b2}\n"  # Command format
-            self.arduino.write(command.encode())
-            print(f"Sent: {command.strip()}")
-        else:
-            print("Arduino is not connected")
-
     def send_cmd(self, cmd):
         if cmd is None:
             print("Cannot send command, no color is detected")
@@ -65,70 +51,24 @@ class Connector:
     def wait_for_ready(self, target_message="Finish setup", timeout=100):
         start_time = time.time()
         while time.time() - start_time < timeout:
-            if self.arduino.in_waiting > 0 and target_message=="Finish setup":
-                line = self.arduino.readline().decode('utf-8', errors='ignore').strip()
-                print(f"{line}")
-                if target_message in line:
-                    print("Arduino is ready.")
-                    return True
-            if self.arduino.in_waiting > 0 and target_message=="Done!":
-                line = self.arduino.readline().decode('utf-8', errors='ignore').strip()
-                print(f"Arduino waiting: {line}")
-                if target_message in line:
-                    print("Arm ready for next sorting")
-                    return True
-        print(f"Timeout waiting for '{target_message}' from Arduino.")
+            try:
+                if self.arduino and self.arduino.in_waiting > 0:
+                    line = self.arduino.readline().decode('utf-8', errors='ignore').strip()
+                    print(f"Arduino says: {line}")
+                    if target_message in line:
+                        print(f"[✓] Message received: {target_message}")
+                        return True
+            except Exception as e:
+                print(f"[wait_for_ready error] {e}")
+                return False
+        print(f"[!] Timeout waiting for '{target_message}'")
         return False
-
-    def listen_to_arduino(self):
-        # Initialize the position values
-        self.x_pos = 0.0
-        self.y_pos = 0.0
-        self.z_pos = 0.0
-
-        while self.running:
-            if self.arduino and self.arduino.in_waiting > 0:
-                try:
-                    message = self.arduino.readline().decode('utf-8').strip()
-                    if message:
-                        print(f"Arduino says: {message}")
-                        
-                        # Use regular expression to capture x, y, z values
-                        x_match = re.search(r"x:\s*(-?\d+\.?\d*)", message)
-                        y_match = re.search(r"y:\s*(-?\d+\.?\d*)", message)
-                        z_match = re.search(r"z:\s*(-?\d+\.?\d*)", message)
-
-                        # Parse and update positions if they are found
-                        if x_match:
-                            try:
-                                self.x_pos = float(x_match.group(1))
-                                print(f"Updated x: {self.x_pos}")
-                            except Exception as e:
-                                print(f"Failed to parse x: {e}")
-
-                        if y_match:
-                            try:
-                                self.y_pos = float(y_match.group(1))
-                                print(f"Updated y: {self.y_pos}")
-                            except Exception as e:
-                                print(f"Failed to parse y: {e}")
-
-                        if z_match:
-                            try:
-                                self.z_pos = float(z_match.group(1))
-                                print(f"Updated z: {self.z_pos}")
-                            except Exception as e:
-                                print(f"Failed to parse z: {e}")
-                except Exception as e:
-                    print(f"Error reading from Arduino: {e}")
-
-
-
+    
     def start_listening(self):
         self.running = True
         self.listener_thread = threading.Thread(target=self.listen_to_arduino, daemon=True)
         self.listener_thread.start()
-
+        
     def stop(self):
         self.running = False
         if self.arduino and self.arduino.is_open:
@@ -145,8 +85,31 @@ class Connector:
                 return port.device
         return None
 
-
+    def reconnect(self):
+        print("Reconnecting to Arduino...")
+        self.stop()
+        self.port = self.find_arduino()
+        self.connect_arduino()
+        if self.arduino:
+            self.start_listening()
     
+    def listen_to_arduino(self):
+        while self.running:
+            try:
+                if self.arduino and self.arduino.in_waiting > 0:
+                    line = self.arduino.readline().decode('utf-8', errors='ignore').strip()
+                    if line:
+                        print(f"[←] Arduino says: {line}")
+            except serial.SerialException as e:
+                print(f"[Serial Error] {e}")
+                self.running = False
+                self.handle_disconnect()
+                break
+            except Exception as e:
+                print(f"[Unexpected Error] {e}")
+                self.running = False
+                break
+            time.sleep(0.01)
 
 
 # Example usage:
