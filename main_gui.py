@@ -1,10 +1,10 @@
+#!/usr/bin/env python3
 import sys
 from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget, QPushButton, QMainWindow
 from PyQt5.QtCore import QThread, pyqtSignal
 
 from worker_gui import DetectionWorker
 from ui_mainwindow import Ui_MainWindow
-
 
 class MainWindow(QMainWindow):
     def __init__(self):

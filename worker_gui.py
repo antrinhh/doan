@@ -2,14 +2,14 @@
 from gpiozero import Servo
 from time import sleep
 from gpiozero.pins.pigpio import PiGPIOFactory
+from time import time
+from connector import Connector
+from detect_pickup_zone import DetectColor
+from aruco_detect import homo_matrix_from_marker
+from helper_func import angle_to_value
 import cv2 as cv
 import numpy as np
 import matplotlib.pyplot as plt
-from time import time
-from connector import Connector
-from detect_pickup_zone import detect_pickup_zone, distance_to_zone, DetectColor, ZONE_DIMENSION
-from aruco_detect import homo_matrix_from_marker
-from servo import angle_to_value
 from PyQt5.QtCore import QThread, pyqtSignal
 
 

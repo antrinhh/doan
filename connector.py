@@ -47,6 +47,18 @@ class Connector:
             print(f"Sent: {command.strip()}")
         else:
             print("Arduino not connected")
+    
+    def send_coords(self, x, y, z):
+        if None in [x, y, z]:
+            print("Cannot send command. One or more coordinates are None.")
+            return
+        
+        if self.arduino and self.arduino.is_open:
+            command = f"{x:.2f}, {y:.2f}, {z:.2f}\n"  # Command format
+            self.arduino.write(command.encode())
+            print(f"Sent: {command.strip()}")
+        else:
+            print("Arduino is not connected")
 
     def wait_for_ready(self, target_message="Finish setup", timeout=100):
         start_time = time.time()
