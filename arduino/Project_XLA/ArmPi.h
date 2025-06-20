@@ -1,6 +1,5 @@
 #ifndef ARM_PI_H
 #define ARM_PI_H
-#include <Servo.h>
 // #define S1_EN_PIN A1
 // Based: 1/8, step/angle = 40 H H L
 #define S1_STEP_PIN 2
@@ -21,8 +20,6 @@
 #define S2_STOP_PIN 10
 #define S3_STOP_PIN 11
 
-#define SERVO_PIN 12
-
 #define STEPS_PER_DEGREE_S1 20
 #define STEPS_PER_DEGREE_S2 40
 #define STEPS_PER_DEGREE_S3 20
@@ -35,13 +32,6 @@
 #define a3 140.00 //b
 #define a2 140.00 //c
 #define d1 130.00 //d
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
-
-#define SERVO_OPEN 80
-#define SERVO_CLOSE 0
 
 extern bool s1_stop;
 extern float s1_pos;
@@ -64,7 +54,6 @@ extern uint16_t s3_delay_us;
 extern float q4;
 extern bool color;
 extern float x, y, z;
-extern bool servo_angle;
 extern float pre_alpha;
 
 extern float joint_current[4];
@@ -74,7 +63,6 @@ extern float xyz_next[4];
 extern char cmd[20];
 
 extern bool debug;
-extern bool newData;
 extern bool out_of_bound;
 extern bool first_move;
 

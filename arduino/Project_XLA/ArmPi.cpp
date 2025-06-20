@@ -23,7 +23,6 @@ uint16_t s3_delay_us = 1200;
 float q4 = 0;
 bool color = false;
 float x, y, z;
-bool servo_angle = 1;
 float pre_alpha = 62;
 
 bool debug = true;
@@ -68,7 +67,6 @@ void go_home() {
     if (s3_stop) digitalWrite(S3_STEP_PIN, LOW);
     delayMicroseconds(s3_delay_us);
   }
-  myservo.write(SERVO_CLOSE);
   s1_stop = true;
   s2_stop = true; 
   s3_stop = true;
@@ -187,7 +185,7 @@ void go_to_pos_end(float x, float y, float z, uint8_t done) {
   if(debug){
     Serial.println("X: " + String(x, 2) + ", Y: " + String(y, 2) + ", Z: " + String(z, 2));
   }
-  // Control servo
+  
   if(done){
     Serial.println("Done!");
   }
@@ -198,7 +196,6 @@ void pick_and_drop() {
 
   go_to_pos_end(260, 0, 78, 1);
   delay(1000);
-  myservo.write(SERVO_CLOSE);
   delay(2000);
 
   if (xyz_end_delta[4] == 1) {

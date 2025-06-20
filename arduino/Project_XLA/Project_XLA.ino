@@ -22,7 +22,7 @@ void setup() {
   go_home();  
   go_to_pos_end(190, 0, 60, 1);
   delay(2000);
-  go_to_pos_end(-40, -200, 60, 1);
+  // go_to_pos_end(-40, -200, 60, 1); test xem co vuot qua tam voi khong
 
   // go_to_pos_end(250, 0, 58, 1);
   // delay(2000);
@@ -46,7 +46,11 @@ void loop(){
   if (Serial.available() > 0) {
     char inputvalue = char(Serial.read());
 
-    if (inputvalue == '\n' || inputvalue == '\r') return;
+    if(inputvalue == '\n' || inputvalue == '\r') return;
+
+    if(inputvalue == 'y'){
+      debug = !debug;
+    }
 
     if(inputvalue ==  's'){
         go_to_pos_end(250, 0, 58, 1);
@@ -58,41 +62,44 @@ void loop(){
     if(inputvalue == 'b'){
       go_to_pos_end(250, 0, 89, 0);
       go_to_pos_end(30, -200, 89, 0);
-      Serial.println("X: 30, Y: 200, Z: 60");
+      if(debug){
+        Serial.print("Going to X: 30, Y: 200, ");
+        Serail.println("Z:" + String(60 * b_nums * 30));
+      }
       go_to_pos_end(30, -200, 60 + b_nums * 30, 0);
       b_nums += 1;
       Serial.println("Sorted!");
       delay(1500);
       go_to_pos_end(30, -200, 89, 1);
-      Serial.println("s1_angle: " + String(s1_angle, 4));
-      Serial.println("s2_angle: " + String(s2_angle, 4));
-      Serial.println("s3_angle: " + String(s3_angle, 4));
+    
     }
     if(inputvalue == 'r'){
       go_to_pos_end(250, 0, 89, 0);
       go_to_pos_end(0, -200, 89, 0);
-      Serial.println("X: 0, Y: -200, Z: 60");
+      if(debug){
+        Serial.println("Going to X: 0, Y: -200, ");
+        Serail.println("Z:" + String(60 * r_nums * 30));
+      }
       go_to_pos_end(0, -200, 60 * r_nums * 30, 0);
       r_nums += 1;
       Serial.println("Sorted!");
       delay(1500);
       go_to_pos_end(0, -200, 89, 1);
-      Serial.println("s1_angle: " + String(s1_angle, 4));
-      Serial.println("s2_angle: " + String(s2_angle, 4));
-      Serial.println("s3_angle: " + String(s3_angle, 4));
+      
     }
     if(inputvalue == 'g'){
       go_to_pos_end(250, 0, 89, 0);
       go_to_pos_end(-30, -200, 89, 0);
-      Serial.println("X: -30, Y: -200, Z: 60");
+      if(debug){
+        Serial.println("Going to X: -30, Y: -200, ");
+        Serail.println("Z:" + String(60 * g_nums * 30));
+      }
       go_to_pos_end(-30, -200, 60 * g_nums *30, 0);
       g_nums += 1;
       Serial.println("Sorted!");
       delay(1500);
       go_to_pos_end(-30, -200, 89, 1);
-      Serial.println("s1_angle: " + String(s1_angle, 4));
-      Serial.println("s2_angle: " + String(s2_angle, 4));
-      Serial.println("s3_angle: " + String(s3_angle, 4));
+    
     }
   }
 }
