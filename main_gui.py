@@ -79,7 +79,6 @@ class MainWindow(QMainWindow):
                         cv.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
             loop_time = time()
             current_time = time()
-            elapsed_time = current_time - last_process_time
 
             if zone == 0:
                 H_cam_obj, box = homo_matrix_from_marker(frame, cam_matrix, dist_coeffs, drawAxis=False)
@@ -140,43 +139,41 @@ class MainWindow(QMainWindow):
                     zone = 0
                 
             if zone == 1 and self.mode == 2:
-                if elapsed_time >= 10:
-                    _, _ = homo_matrix_from_marker(frame, cam_matrix, dist_coeffs, drawAxis=False)
-                    text, percent = DetectColor(roi)
-                    print(text, percent)
-                    if text != "unknown":
-                        print("GOT COLOUR!!!!!!!!!!!!!!!")
-                        self.ui.textEdit.setText("GOT COLOUR!!!!!!!!!!!!!!!")
-                        x, y, z = trans_end_zones.flatten()
-                        arduino.send_coords(x, y, z)
-                        arduino.wait_for_ready(target_message="Done!")
-                        print("Grabbing!")
-                        self.ui.textEdit.setText("Grabbing!")
-                        servo.value = angle_to_value(0)
-                        sleep(2)
-                        if text == "blue":
-                            arduino.send_cmd("b")
-                            arduino.wait_for_ready(target_message="Sorted!")
-                            self.blue += 1
-                            self.ui.label_3.setText(str(self.blue))
-                        elif text == "red":
-                            arduino.send_cmd("r")
-                            arduino.wait_for_ready(target_message="Sorted!")
-                            self.red += 1
-                            self.ui.label.setText(str(self.red))
-                        elif text == "green":
-                            arduino.send_cmd("g")
-                            arduino.wait_for_ready(target_message="Sorted!")
-                            self.green += 1
-                            self.ui.label_2.setText(str(self.green))
-                        servo.value = angle_to_value(70)
-                        sleep(2)
-                        arduino.wait_for_ready(target_message="Done!")
-                        arduino.send_cmd("h")
-                        arduino.wait_for_ready(target_message="Done!")
-                        zone = 0
+                _, _ = homo_matrix_from_marker(frame, cam_matrix, dist_coeffs, drawAxis=False)
+                text, percent = DetectColor(roi)
+                print(text, percent)
+                if text != "unknown":
+                    print("GOT COLOUR!!!!!!!!!!!!!!!")
+                    self.ui.textEdit.setText("GOT COLOUR!!!!!!!!!!!!!!!")
+                    x, y, z = trans_end_zones.flatten()
+                    arduino.send_coords(x, y, z)
+                    arduino.wait_for_ready(target_message="Done!")
+                    print("Grabbing!")
+                    self.ui.textEdit.setText("Grabbing!")
+                    servo.value = angle_to_value(0)
+                    sleep(2)
+                    if text == "blue":
+                        arduino.send_cmd("b")
+                        arduino.wait_for_ready(target_message="Sorted!")
+                        self.blue += 1
+                        self.ui.label_3.setText(str(self.blue))
+                    elif text == "red":
+                        arduino.send_cmd("r")
+                        arduino.wait_for_ready(target_message="Sorted!")
+                        self.red += 1
+                        self.ui.label.setText(str(self.red))
+                    elif text == "green":
+                        arduino.send_cmd("g")
+                        arduino.wait_for_ready(target_message="Sorted!")
+                        self.green += 1
+                        self.ui.label_2.setText(str(self.green))
+                    servo.value = angle_to_value(70)
+                    sleep(2)
+                    arduino.wait_for_ready(target_message="Done!")
+                    arduino.send_cmd("h")
+                    arduino.wait_for_ready(target_message="Done!")
+                    zone = 0
 
-                    last_process_time = current_time
 
             # cv.imshow('origin', frame)
             if roi is not None and roi.size > 0:

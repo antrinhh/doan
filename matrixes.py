@@ -17,7 +17,7 @@ a3 = 140
 a4 = 84
 
 x_end_cam = 5
-y_end_cam = 39
+y_end_cam = 34
 z_end_cam = 0
 
 

@@ -27,7 +27,7 @@ def main(mode=1):
     servo.value = angle_to_value(70)
     sleep(2)
 
-    with np.load('calibration.npz') as X:
+    with np.load('/home/siuw/Documents/doan/calibration.npz') as X:
         cam_matrix, dist_coeffs = [X[i] for i in ('cam_mtx', 'dist')]
     vid = find_first_camera()
     loop_time = time()
@@ -56,7 +56,8 @@ def main(mode=1):
                     cv.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
         loop_time = time()
         current_time = time()
-        elapsed_time = current_time - last_process_time
+        if mode == 2:
+            elapsed_time = current_time - last_process_time
 
         if zone == 0:
             H_cam_obj, box = homo_matrix_from_marker(frame, cam_matrix, dist_coeffs, drawAxis=False)
@@ -142,7 +143,7 @@ def main(mode=1):
         # cv.imshow('origin', frame)
         if roi is not None and roi.size > 0:
             pass
-            #cv.imshow("roi", roi)
+            cv.imshow("roi", roi)
         # Break, stop, pause
         if cv.waitKey(50) == ord('q'):
             break

@@ -54,7 +54,7 @@ class Connector:
             return
         
         if self.arduino and self.arduino.is_open:
-            command = f"{x:.2f}, {y:.2f}, {z:.2f}\n"  # Command format
+            command = f"{x:.2f},{y:.2f},{z:.2f}\n"  # Command format
             self.arduino.write(command.encode())
             print(f"Sent: {command.strip()}")
         else:
@@ -95,7 +95,7 @@ class Connector:
                 'CP210' in port.description or
                 'USB Serial' in port.description):
                 return port.device
-        return None
+        return '/dev/ttyAMA0'
 
     def reconnect(self):
         print("Reconnecting to Arduino...")
