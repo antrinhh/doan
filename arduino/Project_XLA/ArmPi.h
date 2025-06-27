@@ -1,5 +1,6 @@
 #ifndef ARM_PI_H
 #define ARM_PI_H
+#include <Servo.h>
 // #define S1_EN_PIN A1
 // Based: 1/8, step/angle = 40 H H L
 #define S1_STEP_PIN 2
@@ -28,7 +29,7 @@
 #define S3_START 0 // home position is -22 degrees compare to horizontal
 #define S4_START -132
 
-#define a4 83.00 //a
+#define a4 90.00 //a
 #define a3 140.00 //b
 #define a2 140.00 //c
 #define d1 130.00 //d
@@ -57,21 +58,37 @@ extern float x, y, z;
 extern float pre_alpha;
 
 extern float joint_current[4];
-extern float xyz_current[4];
-extern float xyz_end_delta[5];
-extern float xyz_next[4];
+extern float xyz_current[3];
+extern float xyz[3];
+extern float xyz_next[3];
 extern char cmd[20];
 
 extern bool debug;
 extern bool out_of_bound;
 extern bool first_move;
+extern bool newData;
+
+extern int b_nums;
+extern int g_nums;
+extern int r_nums;
+extern char charCommand;
+extern bool isFullCommand;
 
 void end_to_coords();
+
+
+void updatePosition(float q1, float q2, float q3, float q4, float x, float y, float z);
 
 void go_home();
 
 void pick_and_drop();
 
 void go_to_pos_end(float x, float y, float z, uint8_t done);
+
+void recvWithEndMarker();
+
+void parseData();
+
+void handleCharCommand(char inputvalue);
 
 #endif

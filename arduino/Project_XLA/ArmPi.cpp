@@ -23,23 +23,21 @@ uint16_t s3_delay_us = 1200;
 float q4 = 0;
 bool color = false;
 float x, y, z;
-float pre_alpha = 62;
+float pre_alpha = 59;
 
 bool debug = true;
 bool newData = false;
 bool out_of_bound = false;
 bool first_move = true;
+bool isFullCommand = false;
+char charCommand = '\0';
 
 float joint_current[4] = {S1_START, S2_START, S3_START, S4_START};
-float xyz_current[4] = {121.16, -4.23, 238.92, 0};
-float xyz_next[4] = {121.16, -4.23, 238.92, 0};  
-char cmd[20];             
-
-void end_to_coords() {
-  xyz_next[0] = xyz_current[0] + xyz_end_delta[0] * cos(radians(joint_current[0])) + xyz_end_delta[2] * sin(radians(joint_current[0])) - 10;
-  xyz_next[1] = (xyz_current[1] + xyz_end_delta[0] * sin(radians(joint_current[0])) - xyz_end_delta[2] * cos(radians(joint_current[0])));
-  xyz_next[2] = xyz_current[2] + xyz_end_delta[1] - 20; 
-}
+float xyz_current[3] = {121.16, -4.23, 238.92};
+float xyz_next[3] = {121.16, -4.23, 238.92}; 
+float xyz[3] = {0, 0, 0}; 
+char cmd[20];
+char receivedChars[48];              
 
 void go_home() {
   // digitalWrite(S1_EN_PIN, LOW);
@@ -183,41 +181,150 @@ void go_to_pos_end(float x, float y, float z, uint8_t done) {
   }
 
   if(debug){
-    Serial.println("X: " + String(x, 2) + ", Y: " + String(y, 2) + ", Z: " + String(z, 2));
+    Serial.println("X: " + String(x, 2) + ", Y: " + String(y, 2) + ", Z: " + String(z - 30, 2));
   }
-  
+  updatePosition(s1_pos, s2_pos, q3, q4, x, y, z);
   if(done){
     Serial.println("Done!");
   }
 
 }
 
-void pick_and_drop() {
+void recvWithEndMarker() {
+  static byte ndx = 0;
+  char endMarker = '\n';
+  char rc;
 
-  go_to_pos_end(260, 0, 78, 1);
-  delay(1000);
-  delay(2000);
+  while (Serial.available() > 0 && ndx < sizeof(cmd) - 1) {
+    rc = Serial.read();
+    if (rc == endMarker) {
+      cmd[ndx] = '\0';  // Null-terminate the string
+      ndx = 0;
 
-  if (xyz_end_delta[4] == 1) {
-    Serial.println("X: 200, Y: 200, Z: 50");
-    go_to_pos_end(100, -200, 50, 1);
-    Serial.println("s1_angle: " + String(s1_angle, 4));
-    Serial.println("s2_angle: " + String(s2_angle, 4));
-    Serial.println("s3_angle: " + String(s3_angle, 4));
+      // Debug print to see what was received
+      Serial.print("Received cmd: ");
+      Serial.println(cmd);
+
+      // Determine whether it's a full command or a char command
+      if (strchr(cmd, ',') != NULL) {
+        isFullCommand = true;
+        Serial.println("Detected full command.");
+      } else if (strlen(cmd) == 1) {
+        charCommand = cmd[0];
+        isFullCommand = false;
+        Serial.println("Detected char command.");
+      } else {
+        isFullCommand = false; // Fallback case
+        Serial.println("Unknown command format.");
+      }
+
+      newData = true;
+      break;
+    } else {
+      cmd[ndx++] = rc;
+    }
   }
-  else if (xyz_end_delta[4] == 2) {
-    Serial.println("X: 0, Y: 200, Z: 50");
-    go_to_pos_end(0, -200, 50, 1);
-    Serial.println("s1_angle: " + String(s1_angle, 4));
-    Serial.println("s2_angle: " + String(s2_angle, 4));
-    Serial.println("s3_angle: " + String(s3_angle, 4));
-  }
-  else if (xyz_end_delta[4] == 3) {
-    Serial.println("X: -200, Y: 200, Z: 50");
-    go_to_pos_end(-100, -200, 50, 1);
-    Serial.println("s1_angle: " + String(s1_angle, 4));
-    Serial.println("s2_angle: " + String(s2_angle, 4));
-    Serial.println("s3_angle: " + String(s3_angle, 4));
-  }
-  Serial.println("Done pickup!");
-} 
+}
+
+void parseData() {
+  char * strtokIndx; 
+
+  strtokIndx = strtok(cmd, ",");
+  xyz[0] = atof(strtokIndx);
+
+  strtokIndx = strtok(NULL, ",");
+  xyz[1] = atof(strtokIndx);
+
+  strtokIndx = strtok(NULL, ",");
+  xyz[2] = atof(strtokIndx);
+
+  Serial.print("X: "); Serial.println(xyz[0]);
+  Serial.print("Y: "); Serial.println(xyz[1]);
+  Serial.print("Z: "); Serial.println(xyz[2]);
+
+  end_to_coords();
+}
+
+void end_to_coords() {
+  xyz_next[0] = xyz_current[0] + xyz[0] * cos(radians(joint_current[0])) + xyz[2] * sin(radians(joint_current[0]));
+  xyz_next[1] = (xyz_current[1] + xyz[0] * sin(radians(joint_current[0])) - xyz[2] * cos(radians(joint_current[0])));
+  xyz_next[2] = xyz_current[2] + xyz[1] - 30; 
+}
+
+void updatePosition(float q1, float q2, float q3, float q4, float x, float y, float z) {
+  // Input: all are in degree
+  joint_current[0] = q1;
+  joint_current[1] = q2;
+  joint_current[2] = q3;
+  joint_current[3] = q4;
+
+  xyz_current[0] = x;
+  xyz_current[1] = y;
+  xyz_current[2] = z;
+}
+
+int b_nums = 0;
+int g_nums = 0;
+int r_nums = 0;
+
+void handleCharCommand(char inputvalue){
+  if(inputvalue == '\n' || inputvalue == '\r') return;
+
+    if(inputvalue == 'y'){
+      debug = !debug;
+    }
+
+    if(inputvalue ==  's'){
+        go_to_pos_end(250, 0, 58, 1);
+    }
+    if(inputvalue == 'h'){
+        go_to_pos_end(210, 0, 89, 0);
+        go_to_pos_end(190, 0, 70, 1);
+    }
+    if(inputvalue == 'b'){
+      go_to_pos_end(250, 0, 89, 0);
+      go_to_pos_end(160, -120, 60 + 40 +b_nums * 30, 0);
+      if(debug){
+        Serial.print("Going to X: 160, Y: -120, ");
+        Serial.println("Z:" + String(60 + b_nums * 30));
+      }
+      go_to_pos_end(160, -120, 60 + b_nums * 30, 0);
+      b_nums += 1;
+      Serial.println(b_nums);
+      Serial.println("Sorted!");
+      delay(1500);
+      go_to_pos_end(160, -120, 60  + b_nums * 30, 1);
+    
+    }
+    if(inputvalue == 'r'){
+      go_to_pos_end(250, 0, 89, 0);
+      go_to_pos_end(140, -140, 60 + 40 + r_nums * 30, 0);
+      if(debug){
+        Serial.println("Going to X: 140, Y: -140, ");
+        Serial.println("Z:" + String(60 + r_nums * 30));
+      }
+      go_to_pos_end(140, -140, 60 + r_nums * 30, 0);
+      r_nums += 1;
+      Serial.println("Sorted!");
+      Serial.println(r_nums);
+      delay(1500);
+      go_to_pos_end(140, -140, 60 + r_nums * 30, 1);
+      
+    }
+    if(inputvalue == 'g'){
+      go_to_pos_end(250, 0, 89, 0);
+      go_to_pos_end(120, -160, 60 + 40+ g_nums *30, 0);
+      if(debug){
+        Serial.println("Going to X: 120, Y: -160, ");
+        Serial.println("Z:" + String(60 + g_nums * 30));
+      }
+      go_to_pos_end(120, -160, 60 + g_nums *30, 0);
+      g_nums += 1;
+      Serial.println("Sorted!");
+      Serial.println(g_nums);
+      delay(1500);
+      go_to_pos_end(120, -160, 60 + g_nums *30, 1);
+    
+    }
+}
+
