@@ -64,7 +64,7 @@ def main():
                 # x, y, z = trans_end_zones.flatten()
                 arduino.send_cmd("s")
                 arduino.wait_for_ready(target_message="Done!")
-                servo.value = angle_to_value(0)
+                servo.value = angle_to_value(13)
                 sleep(2)
                 if text == "blue":
                     arduino.send_cmd("b")

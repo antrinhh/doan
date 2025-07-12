@@ -91,4 +91,5 @@ void parseData();
 
 void handleCharCommand(char inputvalue);
 
+void rotateS1(float to_pos);
 #endif

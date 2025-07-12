@@ -16,9 +16,8 @@ void setup() {
   pinMode(S1_STOP_PIN, INPUT_PULLUP);
   pinMode(S2_STOP_PIN, INPUT_PULLUP);
   pinMode(S3_STOP_PIN, INPUT_PULLUP);
-  go_home();  
-  // go_to_pos_end(190, 0, 60, 1);
-  delay(2000);
+  // go_home(); 
+
   // go_to_pos_end(-40, -200, 60, 1); test xem co vuot qua tam voi khong
 
   // go_to_pos_end(250, 0, 58, 1);
@@ -36,7 +35,7 @@ void setup() {
   // delay(2000);
   // go_to_pos_end(190, 0, 60, 1);
 
-  Serial.println("Finish setup");
+  // Serial.println("Finish setup");
 }
 
 void loop(){

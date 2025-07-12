@@ -25,7 +25,7 @@ bool color = false;
 float x, y, z;
 float pre_alpha = 59;
 
-bool debug = true;
+bool debug = false;
 bool newData = false;
 bool out_of_bound = false;
 bool first_move = true;
@@ -38,6 +38,10 @@ float xyz_next[3] = {121.16, -4.23, 238.92};
 float xyz[3] = {0, 0, 0}; 
 char cmd[20];
 char receivedChars[48];              
+
+int b_nums;
+int g_nums;
+int r_nums;
 
 void go_home() {
   // digitalWrite(S1_EN_PIN, LOW);
@@ -71,6 +75,9 @@ void go_home() {
   s1_pos = S1_START; 
   s2_pos = S2_START; 
   s3_pos = S3_START; 
+  b_nums = 0;
+  g_nums = 0;
+  r_nums = 0;
   if(debug){
     Serial.println("Go home: done!");
     Serial.print("S3 Pos: ");
@@ -183,6 +190,13 @@ void go_to_pos_end(float x, float y, float z, uint8_t done) {
   if(debug){
     Serial.println("X: " + String(x, 2) + ", Y: " + String(y, 2) + ", Z: " + String(z - 30, 2));
   }
+
+  if(!debug){
+    Serial.println("Coordinates: " + String(x, 2) + "," + String(y, 2) + "," + String(z - 30, 2));
+    Serial.println("Positions: " + String(s1_pos, 2) + "," + String(s2_pos, 2) + "," + String(s3_pos, 2));
+    Serial.println("Variables: " + String(s1_pos, 2) + "," + String(s2_pos, 2) + "," + String(q3, 2) + "," + String(q4, 2));
+  }
+
   updatePosition(s1_pos, s2_pos, q3, q4, x, y, z);
   if(done){
     Serial.println("Done!");
@@ -243,12 +257,18 @@ void parseData() {
   Serial.print("Z: "); Serial.println(xyz[2]);
 
   end_to_coords();
+  
+  Serial.print("X_next: "); Serial.println(xyz_next[0]);
+  Serial.print("Y_next: "); Serial.println(xyz_next[1]);
+  Serial.print("Z_next: "); Serial.println(xyz_next[2]);
 }
 
 void end_to_coords() {
+  Serial.println(xyz_current[2]);
   xyz_next[0] = xyz_current[0] + xyz[0] * cos(radians(joint_current[0])) + xyz[2] * sin(radians(joint_current[0]));
   xyz_next[1] = (xyz_current[1] + xyz[0] * sin(radians(joint_current[0])) - xyz[2] * cos(radians(joint_current[0])));
-  xyz_next[2] = xyz_current[2] + xyz[1] - 30; 
+  // xyz_next[2] = xyz_current[2] + xyz[1] - 80;
+  xyz_next[2] = 60; 
 }
 
 void updatePosition(float q1, float q2, float q3, float q4, float x, float y, float z) {
@@ -263,9 +283,7 @@ void updatePosition(float q1, float q2, float q3, float q4, float x, float y, fl
   xyz_current[2] = z;
 }
 
-int b_nums = 0;
-int g_nums = 0;
-int r_nums = 0;
+
 
 void handleCharCommand(char inputvalue){
   if(inputvalue == '\n' || inputvalue == '\r') return;
@@ -274,57 +292,112 @@ void handleCharCommand(char inputvalue){
       debug = !debug;
     }
 
-    if(inputvalue ==  's'){
+    if(inputvalue == 'i'){
+      go_home();  
+      go_to_pos_end(180, 0, 60, 1);
+      delay(2000);
+      Serial.println("Finish setup");
+    }
+
+    if(inputvalue ==  'u'){
         go_to_pos_end(250, 0, 58, 1);
     }
+
     if(inputvalue == 'h'){
         go_to_pos_end(210, 0, 89, 0);
-        go_to_pos_end(190, 0, 70, 1);
+        go_to_pos_end(180, 0, 60, 1);
     }
     if(inputvalue == 'b'){
       go_to_pos_end(250, 0, 89, 0);
-      go_to_pos_end(160, -120, 60 + 40 +b_nums * 30, 0);
+      int max_val = max(max(b_nums, r_nums), g_nums);
+      go_to_pos_end(0, -200, 58 + 40 + max_val * 30, 0);
       if(debug){
-        Serial.print("Going to X: 160, Y: -120, ");
+        Serial.print("Going to X: 0, Y: -200, "); //drop point
         Serial.println("Z:" + String(60 + b_nums * 30));
       }
-      go_to_pos_end(160, -120, 60 + b_nums * 30, 0);
+      go_to_pos_end(0, -200, 58 + b_nums * 30, 0);
       b_nums += 1;
       Serial.println(b_nums);
-      Serial.println("Sorted!");
+      Serial.println("Blue Sorted!");
       delay(1500);
-      go_to_pos_end(160, -120, 60  + b_nums * 30, 1);
+      max_val = max(max(b_nums, r_nums), g_nums);
+      go_to_pos_end(0, -200, 58  + max_val * 30, 1);
+      rotateS1(0);
     
     }
     if(inputvalue == 'r'){
       go_to_pos_end(250, 0, 89, 0);
-      go_to_pos_end(140, -140, 60 + 40 + r_nums * 30, 0);
+      int max_val = max(max(b_nums, r_nums), g_nums);
+      go_to_pos_end(75, -200, 58 + 40 + max_val * 30, 0);
       if(debug){
-        Serial.println("Going to X: 140, Y: -140, ");
+        Serial.println("Going to X: 75, Y: -200, ");
         Serial.println("Z:" + String(60 + r_nums * 30));
       }
-      go_to_pos_end(140, -140, 60 + r_nums * 30, 0);
+      go_to_pos_end(75, -200, 58 + r_nums * 30, 0);
       r_nums += 1;
-      Serial.println("Sorted!");
+      Serial.println("Red Sorted!");
       Serial.println(r_nums);
       delay(1500);
-      go_to_pos_end(140, -140, 60 + r_nums * 30, 1);
-      
+      max_val = max(max(b_nums, r_nums), g_nums);
+      go_to_pos_end(75, -200, 58 + max_val * 30, 1);
+      rotateS1(0);
+
     }
     if(inputvalue == 'g'){
-      go_to_pos_end(250, 0, 89, 0);
-      go_to_pos_end(120, -160, 60 + 40+ g_nums *30, 0);
+      go_to_pos_end(250, 0, 89, 0);     // Go up the grab point
+      int max_val = max(max(b_nums, r_nums), g_nums);
+      go_to_pos_end(150, -200, 58 + 40+ max_val *30, 0);  // higher than drop point
       if(debug){
-        Serial.println("Going to X: 120, Y: -160, ");
+        Serial.println("Going to X: 150, Y: -200, ");
         Serial.println("Z:" + String(60 + g_nums * 30));
       }
-      go_to_pos_end(120, -160, 60 + g_nums *30, 0);
+      go_to_pos_end(150, -200, 58 + g_nums *30, 0); // drop point
       g_nums += 1;
-      Serial.println("Sorted!");
+      Serial.println("Green Sorted!");
       Serial.println(g_nums);
       delay(1500);
-      go_to_pos_end(120, -160, 60 + g_nums *30, 1);
-    
+      max_val = max(max(b_nums, r_nums), g_nums);
+      go_to_pos_end(150, -200, 58 + max_val *30, 1);  // higher than drop point
+      rotateS1(0);
     }
+
+    if(inputvalue == 'w'){
+      go_to_pos_end(xyz_current[0] + 1, xyz_current[1], xyz_current[2], 0);
+    }
+    if(inputvalue == 'a'){
+      go_to_pos_end(xyz_current[0] , xyz_current[1] + 1, xyz_current[2], 0);
+    }
+    if(inputvalue == 's'){
+      go_to_pos_end(xyz_current[0] - 1, xyz_current[1], xyz_current[2], 0);
+    }
+    if(inputvalue == 'd'){
+      go_to_pos_end(xyz_current[0], xyz_current[1] - 1, xyz_current[2], 0);
+    }
+    if(inputvalue == 'q'){
+      go_to_pos_end(xyz_current[0], xyz_current[1], xyz_current[2] + 1, 0);
+    }
+    if(inputvalue == 'e'){
+      go_to_pos_end(xyz_current[0], xyz_current[1], xyz_current[2] - 1, 0);
+    }
+
+}
+
+void rotateS1(float to_pos) {
+
+  float s1_angle = to_pos - s1_pos;
+  Serial.println(s1_pos);
+  Serial.println(s1_angle);
+  digitalWrite(S1_DIR_PIN, s1_angle ? LOW : HIGH);
+  s1_num_steps = round(abs(s1_angle) * STEPS_PER_DEGREE_S1);
+
+  while (s1_num_steps > 0) {
+    digitalWrite(S1_STEP_PIN, HIGH);
+    delayMicroseconds(s3_delay_us);
+    digitalWrite(S1_STEP_PIN, LOW);
+    delayMicroseconds(s3_delay_us);
+    s1_num_steps--;
+  }
+  joint_current[0] = to_pos;
+  s1_pos = to_pos;
 }
 

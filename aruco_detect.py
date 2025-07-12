@@ -34,6 +34,12 @@ def homo_matrix_from_marker(frame, camera_matrix=cam_mtx, dist=dist, object_pts=
         center = np.array((abs(corners[0][0][2][0] + corners[0][0][0][0])//2,
                            abs(corners[0][0][2][1] + corners[0][0][0][1])//2)).astype(int)
         point = np.vstack((center, corners[0][0]))
+        for idx, p in enumerate(point):
+            pos = tuple(p.astype(int))  # ensure (x, y) integer format
+            cv2.circle(frame, pos, 5, (255, 0, 0), -1)  # draw blue dot
+            cv2.putText(frame, str(idx), (pos[0] + 5, pos[1] - 5),  # slight offset
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2, cv2.LINE_AA)  # yellow text
+
         retval, rvec, tvec = cv2.solvePnP(
             object_pts, point, camera_matrix, dist)
         if drawAxis == True:

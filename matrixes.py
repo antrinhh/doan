@@ -17,7 +17,7 @@ a3 = 140
 a4 = 84
 
 x_end_cam = 5
-y_end_cam = 39
+y_end_cam = 34
 z_end_cam = 0
 
 
@@ -29,9 +29,9 @@ def get_homogeous_matrix(rvec, tvec):
     return H
 
 
-def Homogeous_end_to_cam(): # Rotate Ry(90) x Rotate Rz(180) x Rx(-25)
-    H = np.array([[0,       0.4226,      0.906,      -x_end_cam],
-                  [0,       -0.906,     0.4226,      y_end_cam],
+def Homogeous_end_to_cam(): # Rotate Ry(90) x Rotate Rz(180) x Rx(-32)
+    H = np.array([[0,       0.5299,      0.848,      -x_end_cam],
+                  [0,       -0.848,     0.5299,      y_end_cam],
                   [1,       0,      0,      z_end_cam],
                   [0,       0,      0,      1]], dtype=np.float32)
     return H
