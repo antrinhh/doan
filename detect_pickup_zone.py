@@ -8,18 +8,18 @@ ZONE_DIMENSION = np.array([[ZONE_SIZE/2, -ZONE_SIZE/2, 0], [ZONE_SIZE/2, ZONE_SI
                         [-ZONE_SIZE/2, -ZONE_SIZE/2, 0]], dtype=float)
 
 def DetectColor(image):
-    mask_red, _ = extract_red(image)
-    mask_blue, _ = extract_blue(image)
-    mask_green, _ = extract_green(image)
+    mask_red = extract_red(image)
+    mask_blue = extract_blue(image)
+    mask_green = extract_green(image)
     total_pixels = image.shape[0]*image.shape[1]
     percent_red = cv.countNonZero(mask_red) / total_pixels
     percent_green = cv.countNonZero(mask_green)/total_pixels
     percent_blue = cv.countNonZero(mask_blue)/total_pixels
-    if percent_red > 0.5:
+    if percent_red > 0.3:
         return "red", percent_red
-    elif percent_green > 0.5:
+    elif percent_green > 0.3:
         return "green", percent_green
-    elif percent_blue > 0.5:
+    elif percent_blue > 0.3:
         return "blue", percent_blue
     else:
         color_percents = {"red": percent_red, "green": percent_green, "blue": percent_blue}
