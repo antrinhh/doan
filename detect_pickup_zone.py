@@ -7,12 +7,6 @@ ZONE_SIZE = 25
 ZONE_DIMENSION = np.array([[ZONE_SIZE/2, -ZONE_SIZE/2, 0], [ZONE_SIZE/2, ZONE_SIZE/2, 0], [-ZONE_SIZE/2, ZONE_SIZE/2, 0], 
                         [-ZONE_SIZE/2, -ZONE_SIZE/2, 0]], dtype=float)
 
-def arm_scan():
-    return True
-
-
-
-
 def DetectColor(image):
     mask_red, _ = extract_red(image)
     mask_blue, _ = extract_blue(image)
